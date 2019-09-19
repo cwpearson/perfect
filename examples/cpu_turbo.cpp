@@ -1,14 +1,27 @@
+#include <iostream>
+
 #include "perfect/cpu_turbo.hpp"
 
 int main(void) {
 
-    perfect::CpuTurboState state;
-    perfect::get_cpu_turbo_state(&state);
+  perfect::Result ret;
+  perfect::CpuTurboState state;
 
-    perfect::disable_cpu_turbo();
+  // get the current turbo state
+  ret = perfect::get_cpu_turbo_state(&state);
+  if (ret != perfect::Result::SUCCESS) {
+    std::cerr << perfect::get_string(ret) << "\n";
+    exit(EXIT_FAILURE);
+  }
 
-    // do things with CPU turbo disabled
+  // disable turbo
+  if ((ret = perfect::disable_cpu_turbo()) != perfect::Result::SUCCESS) {
+    std::cerr << perfect::get_string(ret) << " when disabling turbo\n";
+    exit(EXIT_FAILURE);
+  }
 
-    perfect::set_cpu_turbo_state(state);
+  // do things with CPU turbo disabled
 
+  // restore the original state
+  ret = perfect::set_cpu_turbo_state(state);
 }

@@ -1,4 +1,4 @@
-# 3.8+ for project(LANGUAGES CUDA)
+# 3.8+ for project(LANGUAGES CUDA) and CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES
 # 3.9+ for OpenMP::OpenMP_CXX
 # 3.10+ findopenmp gained support for language-specific components
 # 3.11+ for CMake not to add -fopenmp to the nvcc flags
@@ -40,6 +40,9 @@ add_subdirectory(include/perfect)
 
 add_library(perfect INTERFACE)
 target_include_directories(perfect INTERFACE include/)
+target_include_directories(perfect INTERFACE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_link_libraries(perfect INTERFACE nvidia-ml)
 
 
 add_subdirectory(examples)
+add_subdirectory(tools)

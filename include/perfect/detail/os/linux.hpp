@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-#include <fstream>
 #include <cassert>
+#include <fstream>
+#include <string>
 #include <vector>
 
 #include <sched.h>
@@ -13,17 +13,20 @@
 
 namespace perfect {
 
+/*! return a set of CPUs the current thread can run on
+ */
 std::vector<int> cpus() {
-    std::vector<int> result;
-    cpu_set_t mask;
-    if (sched_getaffinity(0 /*caller*/, sizeof(cpu_set_t), &mask)) {
-        assert(0 && "failed sched_getaffinity");
+  std::vector<int> result;
+  cpu_set_t mask;
+  if (sched_getaffinity(0 /*caller*/, sizeof(cpu_set_t), &mask)) {
+    assert(0 && "failed sched_getaffinity");
+  }
+  for (int i = 0; i < CPU_SETSIZE; ++i) {
+    if (CPU_ISSET(i, &mask)) {
+      result.push_back(i);
     }
-    for (int i = 0; i < CPU_SETSIZE; ++i) {
-        if (CPU_ISSET(i, &mask)) {
-            result.push_back(i);
-        }
-    }
+  }
+  return result;
 }
 
 Result get_governor(std::string &result, const int cpu) {
@@ -48,4 +51,4 @@ Result set_governor(const int cpu, const std::string &governor) {
   return Result::SUCCESS;
 }
 
-}
+} // namespace perfect

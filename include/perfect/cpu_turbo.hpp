@@ -15,27 +15,32 @@
 #error "unsupported OS"
 #endif
 
-
-
 #include "result.hpp"
 
 namespace perfect {
 
 struct CpuTurboState {
-    bool enabled;
-};
+  bool enabled;
 
+  CpuTurboState() : enabled(false) {}
+};
 
 Result get_cpu_turbo_state(CpuTurboState *state) {
-    state->enabled = is_turbo_enabled();
+  state->enabled = detail::is_turbo_enabled();
+  return Result::SUCCESS;
 }
+
+inline bool is_turbo_enabled(CpuTurboState state) { return state.enabled; }
 
 Result set_cpu_turbo_state(CpuTurboState state) {
-    if (state.enabled) {
-        enable_cpu_turbo();
-    } else {
-        disable_cpu_turbo();
-    }
+  if (state.enabled) {
+    return detail::enable_cpu_turbo();
+  } else {
+    return detail::disable_cpu_turbo();
+  }
 }
 
-};
+inline Result disable_cpu_turbo() { return detail::disable_cpu_turbo(); }
+inline Result enable_cpu_turbo() { return detail::enable_cpu_turbo(); }
+
+}; // namespace perfect
