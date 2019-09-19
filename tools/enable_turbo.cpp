@@ -12,24 +12,14 @@ int main(void) {
 
   perfect::init();
 
-  ret = get_cpu_turbo_state(&state);
-
-  if (ret != Result::SUCCESS) {
-    std::cerr << "ERROR: " << get_string(ret) << "\n";
-    exit(EXIT_FAILURE);
-  }
+  PERFECT(get_cpu_turbo_state(&state));
 
   if (is_turbo_enabled(state)) {
-    std::cerr << "turbo already enabled\n";
+    std::cerr << "cpu turbo already enabled\n";
     exit(EXIT_SUCCESS);
   } else {
-    ret = enable_cpu_turbo();
-    if (ret != Result::SUCCESS) {
-      std::cerr << "ERROR: " << get_string(ret) << "\n";
-      exit(EXIT_FAILURE);
-    } else {
-      std::cerr << "enabled turbo\n";
+    PERFECT(enable_cpu_turbo());
+    std::cerr << "enabled cpu turbo\n";
       exit(EXIT_SUCCESS);
-    }
   }
 }

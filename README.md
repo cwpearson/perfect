@@ -13,6 +13,10 @@ CPU/GPU performance control library for benchmarking
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
 
+## API
+
+
+
 ## Wish List
 
 - [ ] Nvidia GPU power monitoring

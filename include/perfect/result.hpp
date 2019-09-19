@@ -14,6 +14,10 @@ enum class Result {
   UNKNOWN
 };
 
+
+
+
+
 Result from_nvml(nvmlReturn_t nvml) {
   switch (nvml) {
   case NVML_SUCCESS:
@@ -51,4 +55,14 @@ const char *get_string(const Result &result) {
   return "";
 }
 
+inline void check(Result result, const char *file, const int line) {
+  if (result != Result::SUCCESS) {
+    fprintf(stderr, "%s@%d: perfect Error: %s\n", file, line,
+           get_string(result));
+    exit(-1);
+  }
+}
+
 } // namespace perfect
+
+#define PERFECT(stmt) check(stmt, __FILE__, __LINE__);

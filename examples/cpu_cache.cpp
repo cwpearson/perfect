@@ -1,6 +1,9 @@
 #include "perfect/cpu_cache.hpp"
 
 int main(void) {
+
+    using namespace perfect;
+
     int *a = new int[1024];
     flush_all(a, 1024 * sizeof(int));
 

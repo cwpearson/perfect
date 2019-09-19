@@ -18,19 +18,23 @@ inline void checkNvml(nvmlReturn_t result, const char *file, const int line) {
 
 namespace perfect {
 namespace detail {
-std::vector<unsigned int> get_device_memory_clocks(unsigned int index) {
-  std::vector<unsigned int> result;
-  nvmlDevice_t device;
-  nvmlDeviceGetHandleByIndex(index, &device);
-  unsigned int resultCount = 0;
 
-  auto ret = nvmlDeviceGetSupportedMemoryClocks(device, &resultCount, nullptr);
-  if (ret != NVML_ERROR_INSUFFICIENT_SIZE) {
-    NVML(ret);
+Result get_device_memory_clocks(std::vector<unsigned int> &memoryClocksMhz, unsigned int index) {
+  nvmlDevice_t device;
+  nvmlReturn_t ret;
+  ret = nvmlDeviceGetHandleByIndex(index, &device);
+  if (ret != NVML_SUCCESS) {
+    return from_nvml(ret);
   }
-  result.resize(resultCount);
-  NVML(nvmlDeviceGetSupportedMemoryClocks(device, &resultCount, result.data()));
-  return result;
+
+  unsigned int resultCount = 0;
+  ret = nvmlDeviceGetSupportedMemoryClocks(device, &resultCount, nullptr);
+  if (ret != NVML_ERROR_INSUFFICIENT_SIZE) {
+    return from_nvml(ret);
+  }
+  memoryClocksMhz.resize(resultCount);
+  NVML(nvmlDeviceGetSupportedMemoryClocks(device, &resultCount, memoryClocksMhz.data()));
+  return Result::SUCCESS;
 }
 
 Result get_device_graphics_clocks(std::vector<unsigned int> &graphicsClocksMhz,
