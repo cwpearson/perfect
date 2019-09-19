@@ -1,0 +1,32 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build_cuda10-1:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: add repo key
+      run: sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+    - name: add repository
+      run: sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+    - name: apt update
+      run: sudo apt-get update
+    - name: Install cuda
+      run: |
+        sudo apt-get install cuda-toolkit-10-1 cuda-libraries-dev-10-1 cuda-libraries-10-1
+    - name: configure
+      run: |
+        export PATH=/usr/local/cuda/bin:$PATH
+        mkdir build
+        cd build
+        cmake --version
+        cmake .. -DCMAKE_BUILD_TYPE=Debug
+    - name: build
+      run: |
+        export PATH=/usr/local/cuda/bin:$PATH
+        cd build
+        g++ --version
+        nvcc --version
+        make
