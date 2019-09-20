@@ -54,6 +54,6 @@ if(CMAKE_CUDA_COMPILER)
 endif()
 
 if(CMAKE_CUDA_COMPILER)
-    add_executable(gpu-power gpu_power.cu)
-    target_link_libraries(gpu-power perfect)
+    add_executable(gpu-monitor gpu_monitor.cu)
+    target_link_libraries(gpu-monitor perfect)
 endif()
