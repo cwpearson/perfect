@@ -49,7 +49,8 @@ add_subdirectory(include/perfect)
 add_library(perfect INTERFACE)
 target_include_directories(perfect INTERFACE include/)
 target_include_directories(perfect INTERFACE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-target_link_directories(perfect INTERFACE ${CUDA_TOOLKIT_LIB_DIR})
+# target_link_directories(perfect INTERFACE ${CUDA_TOOLKIT_LIB_DIR})
+target_link_directories(perfect INTERFACE ${CMAKE_CUDA_HOST_IMPLICIT_LINK_DIRECTORIES})
 target_link_libraries(perfect INTERFACE nvidia-ml)
 
 
