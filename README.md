@@ -160,6 +160,7 @@ See [examples/cpu_cache.cpp].
 
 * v0.2.0
     * add GPU monitoring
+    * Make CUDA optional
 * v0.1.0
     * cache control
     * Intel P-State control
