@@ -75,7 +75,7 @@ PERFECT(perfect::get_cpu_turbo_state(&state));
 See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 
 ```c++
-#include "perfect/cpu_monitor.hpp"
+#include "perfect/gpu_monitor.hpp"
 ```
 
 * `Monitor(std::ostream *stream)`: create a monitor that will write to `stream`.
@@ -88,7 +88,7 @@ See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 
 `perfect` can enable and disable CPU boost through the Intel p-state mechanism or the ACPI cpufreq mechanism.
 
-See [examples/cpu_turbo.cpp].
+See [examples/cpu_turbo.cpp](examples/cpu_turbo.cpp).
 
 
 ```c++
@@ -105,7 +105,7 @@ See [examples/cpu_turbo.cpp].
 
 `perfect` can control the OS governor on linux.
 
-See [examples/os_perf.cpp].
+See [examples/os_perf.cpp](examples/os_perf.cpp).
 
 ```c++
 #include "perfect/os_perf.hpp"
@@ -119,7 +119,7 @@ See [examples/os_perf.cpp].
 
 `perfect` can enable/disable GPU turbo boost.
 
-See [examples/gpu_turbo.cu]
+See [examples/gpu_turbo.cu](examples/gpu_turbo.cu).
 
 ```c++
 #include "perfect/gpu_turbo.hpp"
@@ -135,7 +135,7 @@ See [examples/gpu_turbo.cu]
 
 `perfect` can lock GPU clocks to their maximum values.
 
-See [examples/gpu_clocks.cu]
+See [examples/gpu_clocks.cu](examples/gpu_clocks.cu).
 
 ```c++
 #include "perfect/gpu_clocks.hpp"
@@ -148,7 +148,7 @@ See [examples/gpu_clocks.cu]
 
 `perfect` can flush data from CPU caches. Unlike the other APIs, these do not return a `Result` because they do not fail.
 
-See [examples/cpu_cache.cpp].
+See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 ```c++
 #include "perfect/cpu_cache.hpp"
@@ -171,4 +171,4 @@ See [examples/cpu_cache.cpp].
 
 ## Wish List
 
-- [ ] nothing right now
+- [ ] only monitor certain GPUs
