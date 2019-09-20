@@ -16,6 +16,7 @@ CPU/GPU performance control library for benchmarking
 - [x] Set GPU clocks (nvidia)
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
+- [x] CUDA not required (GPU functions will not be compiled)
 
 ## Installing
 
@@ -38,11 +39,21 @@ target_link_libraries(your-target perfect)
 ```
 
 ### Without CMake 
-Download the source and add the include directory to your includes and `nvidia-ml` to your link flags
+Download the source **AND**
+* for compiling with a non-cuda compiler:
+    * add the include directory to your includes
+    * add `nvidia-ml` to your link flags
+    * add `-DPERFECT_HAS_CUDA` to your compile definitions
+* with a CUDA compiler, just compile normally (`PERFECT_HAS_CUDA` is defined for you)
 
 ```
-g++ code_using_perfect.cpp -I perfect/include -l nvidia-ml
-nvcc code_using_perfect.cu -I perfect/include
+g++ code_using_perfect.cpp -DPERFECT_HAS_CUDA -Iperfect/include -lnvidia-ml 
+nvcc code_using_perfect.cu -Iperfect/include -lnvidia-ml
+```
+
+If you don't have CUDA, then you could just do
+```
+g++ code_using_perfect.cpp -I perfect/include
 ```
 
 ## Usage
@@ -67,11 +78,11 @@ See [examples/cpu_turbo.cpp].
 #include "perfect/cpu_turbo.hpp"
 ```
 
-* `Result get_cpu_turbo_state(CpuTurboState *state)`
-* `Result set_cpu_turbo_state(CpuTurboState *state)`
-* `Result disable_cpu_turbo()`
-* `Result enable_cpu_turbo()`
-* `bool is_turbo_enabled(CpuTurboState state)`
+* `Result get_cpu_turbo_state(CpuTurboState *state)`: save the current CPU turbo state
+* `Result set_cpu_turbo_state(CpuTurboState *state)`: restore a saved CPU turbo state
+* `Result disable_cpu_turbo()`: disable CPU turbo
+* `Result enable_cpu_turbo()`: enable CPU turbo
+* `bool is_turbo_enabled(CpuTurboState state)`: check if turbo is enabled
 
 ### OS Performance
 
@@ -130,6 +141,6 @@ See [examples/cpu_cache.cpp].
 
 ## Wish List
 
-- [ ] Make CUDA Optional
+
 - [ ] Nvidia GPU power monitoring
 - [ ] Nivida GPU utilization monitoring

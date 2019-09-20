@@ -38,3 +38,26 @@ jobs:
         g++ --version
         nvcc --version
         make VERBOSE=1
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: install cmake
+      run: |
+        export PREFIX=$HOME/software/cmake
+        wget https://github.com/Kitware/CMake/releases/download/v3.15.3/cmake-3.15.3-Linux-x86_64.tar.gz -O cmake.tar.gz
+        mkdir -p $PREFIX
+        tar -xvf cmake.tar.gz --strip-components=1 -C $PREFIX
+    - name: configure
+      run: |
+        export PATH=$HOME/software/cmake/bin:$PATH
+        mkdir build
+        cd build
+        cmake --version
+        cmake .. -DCMAKE_BUILD_TYPE=Debug
+    - name: build
+      run: |
+        export PATH=$HOME/software/cmake/bin:$PATH
+        cd build
+        g++ --version
+        make VERBOSE=1

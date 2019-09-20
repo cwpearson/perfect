@@ -2,22 +2,27 @@
 
 #include <cassert>
 
+#ifdef __NVCC__
+#define PERFECT_HAS_CUDA
+#endif
+
+#ifdef PERFECT_HAS_CUDA
 #include <nvml.h>
+#endif
 
 namespace perfect {
+
 enum class Result {
-  SUCCESS,
-  NVML_NOT_SUPPORTED,
-  NVML_NO_PERMISSION,
-  NVML_UNINITIALIZED,
   NO_PERMISSION,
+  NOT_SUPPORTED,
+  NVML_NO_PERMISSION,
+  NVML_NOT_SUPPORTED,
+  NVML_UNINITIALIZED,
+  SUCCESS,
   UNKNOWN
 };
 
-
-
-
-
+#ifdef PERFECT_HAS_CUDA
 Result from_nvml(nvmlReturn_t nvml) {
   switch (nvml) {
   case NVML_SUCCESS:
@@ -26,6 +31,8 @@ Result from_nvml(nvmlReturn_t nvml) {
     return Result::NVML_UNINITIALIZED;
   case NVML_ERROR_NOT_SUPPORTED:
     return Result::NVML_NOT_SUPPORTED;
+  case NVML_ERROR_NO_PERMISSION:
+    return Result::NVML_NO_PERMISSION;
   case NVML_ERROR_INVALID_ARGUMENT:
   case NVML_ERROR_GPU_IS_LOST:
   case NVML_ERROR_UNKNOWN:
@@ -34,6 +41,7 @@ Result from_nvml(nvmlReturn_t nvml) {
   }
   return Result::UNKNOWN;
 }
+#endif
 
 const char *get_string(const Result &result) {
   switch (result) {
@@ -47,6 +55,8 @@ const char *get_string(const Result &result) {
     return "nvidia-ml returned not supported";
   case Result::NVML_NO_PERMISSION:
     return "nvidia-ml returned no permission";
+  case Result::NOT_SUPPORTED:
+    return "unsupported operation";
   default:
     assert(0 && "unexpected perfect::Result");
   }
@@ -58,7 +68,7 @@ const char *get_string(const Result &result) {
 inline void check(Result result, const char *file, const int line) {
   if (result != Result::SUCCESS) {
     fprintf(stderr, "%s@%d: perfect Error: %s\n", file, line,
-           get_string(result));
+            get_string(result));
     exit(-1);
   }
 }

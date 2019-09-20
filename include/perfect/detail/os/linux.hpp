@@ -1,9 +1,13 @@
 #pragma once
 
 #include <cassert>
+#include <cerrno>
 #include <fstream>
 #include <string>
 #include <vector>
+
+#include <cstring>
+#include <iostream>
 
 #include <sched.h>
 #include <sys/types.h>
@@ -46,7 +50,14 @@ Result set_governor(const int cpu, const std::string &governor) {
   ofs << governor;
   ofs.close();
   if (ofs.fail()) {
-    return Result::NO_PERMISSION;
+    switch (errno) {
+    case EACCES:
+      return Result::NO_PERMISSION;
+    case ENOENT:
+      return Result::NOT_SUPPORTED;
+    default:
+      return Result::UNKNOWN;
+    }
   }
   return Result::SUCCESS;
 }
