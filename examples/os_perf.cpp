@@ -3,7 +3,7 @@
 #include <map>
 
 int main(void) {
-
+    perfect::init();
 
     std::map<int, perfect::OsPerfState> states;
 

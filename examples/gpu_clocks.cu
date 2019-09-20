@@ -4,9 +4,7 @@
 #include "perfect/init.hpp"
 
 int main(void) {
-
     using namespace perfect;
-
     init();
 
     for (unsigned int gpu = 0; gpu < 1; ++gpu) {

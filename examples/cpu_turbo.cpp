@@ -3,6 +3,7 @@
 #include "perfect/cpu_turbo.hpp"
 
 int main(void) {
+  perfect::init();
 
   perfect::Result ret;
   perfect::CpuTurboState state;

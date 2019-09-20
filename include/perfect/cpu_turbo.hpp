@@ -15,6 +15,7 @@
 #error "unsupported OS"
 #endif
 
+#include "init.hpp"
 #include "result.hpp"
 
 namespace perfect {

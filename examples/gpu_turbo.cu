@@ -4,11 +4,10 @@
 #define OR_DIE(expr)
 
 int main(void) {
-
   using namespace perfect;
-  GpuTurboState state;
-
   init();
+
+  GpuTurboState state;
 
   for (unsigned int gpu = 0; gpu < 1; ++gpu) {
     PERFECT(perfect::get_gpu_turbo_state(&state, gpu));

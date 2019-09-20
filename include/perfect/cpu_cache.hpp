@@ -24,6 +24,8 @@ Routines for controlling CPU caching
 #error "unsupported CPU arch"
 #endif
 
+#include "init.hpp"
+
 namespace perfect {
 
 inline void flush_all(void *p, const size_t n) {

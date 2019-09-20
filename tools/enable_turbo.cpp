@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "perfect/cpu_turbo.hpp"
-#include "perfect/init.hpp"
 
 using namespace perfect;
 

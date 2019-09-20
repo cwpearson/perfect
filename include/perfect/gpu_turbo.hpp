@@ -3,6 +3,7 @@
 #include "detail/nvidia/nvidia-ml.hpp"
 
 #include "result.hpp"
+#include "init.hpp"
 
 namespace perfect {
 

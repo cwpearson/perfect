@@ -1,12 +1,8 @@
 #pragma once
 
-
-
 #include <vector>
 #include <string>
 #include <cassert>
-
-
 
 #ifdef __linux__
 #include "detail/os/linux.hpp"
@@ -15,6 +11,7 @@
 #endif
 
 #include "result.hpp"
+#include "init.hpp"
 
 namespace perfect {
 
