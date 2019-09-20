@@ -3,7 +3,9 @@
 #include <cassert>
 
 #ifdef __NVCC__
+#ifndef PERFECT_HAS_CUDA
 #define PERFECT_HAS_CUDA
+#endif
 #endif
 
 #ifdef PERFECT_HAS_CUDA

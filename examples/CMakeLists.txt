@@ -52,3 +52,8 @@ if(CMAKE_CUDA_COMPILER)
     add_executable(gpu-turbo gpu_turbo.cu)
     target_link_libraries(gpu-turbo perfect)
 endif()
+
+if(CMAKE_CUDA_COMPILER)
+    add_executable(gpu-power gpu_power.cu)
+    target_link_libraries(gpu-power perfect)
+endif()

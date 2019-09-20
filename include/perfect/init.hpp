@@ -1,12 +1,16 @@
 #pragma once
 
 #ifdef __NVCC__
+#ifndef PERFECT_HAS_CUDA
 #define PERFECT_HAS_CUDA
+#endif
 #endif
 
 #ifdef PERFECT_HAS_CUDA
 #include <nvml.h>
 #endif
+
+#include "perfect/result.hpp"
 
 namespace perfect {
 

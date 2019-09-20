@@ -11,6 +11,7 @@ CPU/GPU performance control library for benchmarking
 
 ## Features
 
+- [x] GPU power/utilization/temperature monitoring (nvidia)
 - [x] Disable CPU turbo (linux)
 - [x] Set OS CPU performance mode to maximum (linux)
 - [x] Set GPU clocks (nvidia)
@@ -67,6 +68,22 @@ perfect::CpuTurboState state;
 PERFECT(perfect::get_cpu_turbo_state(&state));
 ```
 
+## Monitoring
+
+`perfect` can monitor and record GPU activity.
+
+See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
+
+```c++
+#include "perfect/cpu_monitor.hpp"
+```
+
+* `Monitor(std::ostream *stream)`: create a monitor that will write to `stream`.
+* `void Monitor::start()`: start the monitor
+* `void Monitor::stop()`: terminate the monitor
+* `void Monitor::pause()`: pause the monitor thread
+* `void Monitor::resume()`: resume the monitor thread
+
 ### CPU Turbo
 
 `perfect` can enable and disable CPU boost through the Intel p-state mechanism or the ACPI cpufreq mechanism.
@@ -121,7 +138,7 @@ See [examples/gpu_turbo.cu]
 See [examples/gpu_clocks.cu]
 
 ```c++
-#include "perfect/gpu_clocks.hpp`
+#include "perfect/gpu_clocks.hpp"
 ```
 
 * `Result set_max_gpu_clocks(unsigned int idx)`: Set GPU `idx` clocks to their maximum reported values.
@@ -134,13 +151,23 @@ See [examples/gpu_clocks.cu]
 See [examples/cpu_cache.cpp].
 
 ```c++
-#include "perfect/cpu_cache.hpp`
+#include "perfect/cpu_cache.hpp"
 ```
 
 * `void flush_all(void *p, const size_t n)`: Flush all cache lines starting at `p` for `n` bytes.
 
+## Changelog
+
+* v0.2.0
+    * add GPU monitoring
+* v0.1.0
+    * cache control
+    * Intel P-State control
+    * linux governor control
+    * POWER cpufreq control
+    * Nvidia GPU boost control
+    * Nvidia GPU clock control
+
 ## Wish List
 
-
-- [ ] Nvidia GPU power monitoring
-- [ ] Nivida GPU utilization monitoring
+- [ ] nothing right now
