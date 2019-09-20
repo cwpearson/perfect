@@ -5,7 +5,7 @@
 # 3.13+ for target_link_directories
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-project(perfect LANGUAGES CXX VERSION 0.1.0)
+project(perfect LANGUAGES CXX VERSION 0.2.0)
 message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
 
 include(CheckLanguage)
