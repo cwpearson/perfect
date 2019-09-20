@@ -1,5 +1,9 @@
 # perfect
 
+| Branch | Status |
+|-|-|
+| master |[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fcwpearson%2Fperfect%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/cwpearson/perfect/goto?ref=master)|
+
 CPU/GPU performance control library for benchmarking
 * x86
 * POWER

@@ -2,7 +2,8 @@
 # 3.9+ for OpenMP::OpenMP_CXX
 # 3.10+ findopenmp gained support for language-specific components
 # 3.11+ for CMake not to add -fopenmp to the nvcc flags
-cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+# 3.13+ for target_link_directories
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 project(perfect LANGUAGES CUDA CXX VERSION 0.1.0)
 message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
@@ -32,6 +33,13 @@ elseif (CMAKE_BUILD_TYPE MATCHES Release)
   set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} -lineinfo)
 endif()
 
+# find the CUDA stubs directory in case the drivers are not installed
+# for CI, for example
+set(CUDA_TOOLKIT_ROOT_DIR "${CMAKE_CUDA_COMPILER}")
+get_filename_component(CUDA_TOOLKIT_ROOT_DIR "${CUDA_TOOLKIT_ROOT_DIR}" DIRECTORY)
+get_filename_component(CUDA_TOOLKIT_ROOT_DIR "${CUDA_TOOLKIT_ROOT_DIR}" DIRECTORY)
+set(CUDA_TOOLKIT_LIB_DIR ${CUDA_TOOLKIT_ROOT_DIR}/lib64/stubs)
+message(STATUS "CUDA toolkit stubs dir:" ${CUDA_TOOLKIT_LIB_DIR})
 
 
 set(CMAKE_CUDA_STANDARD 11)
@@ -41,6 +49,7 @@ add_subdirectory(include/perfect)
 add_library(perfect INTERFACE)
 target_include_directories(perfect INTERFACE include/)
 target_include_directories(perfect INTERFACE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_link_directories(perfect INTERFACE ${CUDA_TOOLKIT_LIB_DIR})
 target_link_libraries(perfect INTERFACE nvidia-ml)
 
 
