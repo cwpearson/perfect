@@ -172,3 +172,8 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 ## Wish List
 
 - [ ] only monitor certain GPUs
+- [ ] A wrapper utility
+    - [ ] disable hyperthreading
+    - [ ] reserve cores 
+    - [ ] set process priority
+    - [ ] disable ASLR
