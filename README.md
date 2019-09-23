@@ -18,6 +18,7 @@ CPU/GPU performance control library for benchmarking
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
+- [x] Flush file system caches (linux)
 
 ## Installing
 
@@ -83,6 +84,22 @@ See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 * `void Monitor::stop()`: terminate the monitor
 * `void Monitor::pause()`: pause the monitor thread
 * `void Monitor::resume()`: resume the monitor thread
+
+### Flush file system caches
+
+`perfect` can drop various filesystem caches
+
+See [tools/sync_drop_caches.cpp](tools/sync_drop_caches.cpp)
+
+```c++
+#include "perfect/drop_caches.hpp"
+```
+
+* `Result sync()`: flush filesystem caches to disk
+* `Result drop_caches(DropCaches_t mode)`: remove file system caches
+  * `mode = PAGECACHE`: drop page caches
+  * `mode = ENTRIES`: drop dentries and inodes
+  * `mode = PAGECACHE | ENTRIES`: both
 
 ### CPU Turbo
 

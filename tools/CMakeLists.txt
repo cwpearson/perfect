@@ -37,3 +37,5 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} \
 add_executable(enable-turbo enable_turbo.cpp)
 target_link_libraries(enable-turbo perfect)
 
+add_executable(sync-drop-caches sync_drop_caches.cpp)
+target_link_libraries(sync-drop-caches perfect)
