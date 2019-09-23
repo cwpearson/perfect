@@ -18,11 +18,8 @@ CPU/GPU performance control library for benchmarking
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
-<<<<<<< HEAD
 - [x] Place sensitive/non-sensitive tasks on different cores
-=======
 - [x] Flush file system caches (linux)
->>>>>>> master
 
 ## Installing
 
@@ -67,6 +64,7 @@ g++ code_using_perfect.cpp -I perfect/include
 The `perfect` functions all return a `perfect::Result`, which is defined in [include/perfect/result.hpp].
 When things are working, it will be `perfect::Result::SUCCESS`.
 A `PERFECT` macro is also defined, which will terminate with an error message unless the `perfect::Result` is `perfect::Result::SUCCESS`.
+The `PERFECT_SUCCESS_OR_RETURN` macro will return a `Result` from the current scope if it is not `Result::SUCCESS`.
 
 ```c++
 perfect::CpuTurboState state;
