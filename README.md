@@ -68,7 +68,7 @@ perfect::CpuTurboState state;
 PERFECT(perfect::get_cpu_turbo_state(&state));
 ```
 
-## Monitoring
+### Monitoring
 
 `perfect` can monitor and record GPU activity.
 
@@ -83,6 +83,18 @@ See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 * `void Monitor::stop()`: terminate the monitor
 * `void Monitor::pause()`: pause the monitor thread
 * `void Monitor::resume()`: resume the monitor thread
+
+### CPU Shielding
+
+`perfect` can restrict which tasks run on which CPUs
+
+See [tools/shield.cpp](tools/shield.cpp).
+
+* `static CpuSet::get_root()`: get the root CpuSet
+* `Result CpuSet::make_child(CpuSet &cpuset)`: create a child cpu set
+* `Result CpuSet::migrate_tasks_to(CpuSet &other)`: migrate all tasks to another CpuSet
+* `Result CpuSet::migrate_self_to(CpuSet &other)`: migrate caller task to another CpuSet
+
 
 ### CPU Turbo
 
