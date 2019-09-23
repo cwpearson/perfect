@@ -12,9 +12,10 @@ int main(void) {
   CpuSet root;
   PERFECT(perfect::CpuSet::get_root(root));
 
-  std::cerr << "cpus: " << root.get_raw_cpus() << "\n";
-  std::cerr << "mems: " << root.get_raw_mems() << "\n";
+  std::cerr << "root cpus: " << root.get_raw_cpus() << "\n";
+  std::cerr << "root mems: " << root.get_raw_mems() << "\n";
 
+  // shield CPU 0
   std::set<int> sCpus = {0};
   std::set<int> rCpus = root.get_cpus();
   std::set<int> uCpus = rCpus - sCpus;
@@ -24,14 +25,13 @@ int main(void) {
   PERFECT(root.make_child(s, "shielded"));
   PERFECT(root.make_child(u, "unshielded"));
 
-  u.enable_memory_migration();
-
-  // shield cpu 0
+  // enable specific cpus for the children
   s.enable_cpus(sCpus);
   u.enable_cpus(uCpus);
 
-  u.enable_mem(0);
-  s.enable_mem(0);
+  // enable all memories for the children
+  u.enable_mems(root.get_mems());
+  s.enable_mems(root.get_mems());
 
   // migrate the caller to s
   std::cerr << "migrate self to " << s << "\n";

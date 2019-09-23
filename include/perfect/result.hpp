@@ -52,6 +52,8 @@ const char *get_string(const Result &result) {
     return "success";
   case Result::NO_PERMISSION:
     return "no permission";
+  case Result::NO_TASK:
+    return "no task";
   case Result::UNKNOWN:
     return "unknown error";
   case Result::NVML_NOT_SUPPORTED:

@@ -108,10 +108,10 @@ std::set<int> parse_cpuset(const std::string &s) {
 namespace perfect {
 class CpuSet {
 public:
-  std::string path;
-  std::set<int> cpus;
-  std::set<int> mems;
-  CpuSet *parent;
+  std::string path_;
+  std::set<int> cpus_;
+  std::set<int> mems_;
+  CpuSet *parent_;
 
   // make sure cpuset is initialized
   static Result init() {
@@ -163,14 +163,14 @@ public:
   }
 
   std::string get_raw_cpus() {
-    std::ifstream is(path + "/cpuset.cpus");
+    std::ifstream is(path_ + "/cpuset.cpus");
     std::stringstream ss;
     ss << is.rdbuf();
     return remove_space(ss.str());
   }
 
   std::string get_raw_mems() {
-    std::ifstream is(path + "/cpuset.mems");
+    std::ifstream is(path_ + "/cpuset.mems");
     std::stringstream ss;
     ss << is.rdbuf();
     return remove_space(ss.str());
@@ -189,7 +189,7 @@ public:
     pid_t self = this_task();
 
     // read this tasks and write each line to other.tasks
-    std::ifstream is(path + "/tasks");
+    std::ifstream is(path_ + "/tasks");
     std::string line;
     while (std::getline(is, line)) {
       line = remove_space(line);
@@ -209,7 +209,7 @@ public:
     SUCCESS_OR_RETURN(other.enable_memory_migration());
 
     // read this tasks and write each line to other.tasks
-    std::ifstream is(path + "/tasks");
+    std::ifstream is(path_ + "/tasks");
     std::string line;
     while (std::getline(is, line)) {
       // std::cerr << "migrating task " << line << " to " << other.path << "\n";
@@ -220,7 +220,7 @@ public:
   }
 
   Result enable_memory_migration() {
-    std::ofstream ofs(path + "/" + "cpuset.memory_migrate");
+    std::ofstream ofs(path_ + "/" + "cpuset.memory_migrate");
     ofs << "1";
     ofs.close();
     if (ofs.fail()) {
@@ -238,15 +238,15 @@ public:
 
   void write_task(const std::string &task) {
     // write `task` to path/tasks
-    std::ofstream os(path + "/tasks");
+    std::ofstream os(path_ + "/tasks");
     os << task << "\n";
   }
 
   // object representing the root CPU set
   static Result get_root(CpuSet &root) {
     SUCCESS_OR_RETURN(CpuSet::init());
-    root.path = "/dev/cpuset";
-    root.parent = nullptr;
+    root.path_ = "/dev/cpuset";
+    root.parent_ = nullptr;
     return Result::SUCCESS;
   }
 
@@ -255,7 +255,7 @@ public:
 
   Result make_child(CpuSet &child, const std::string &name) {
 
-    if (mkdir((path + "/" + name).c_str(),
+    if (mkdir((path_ + "/" + name).c_str(),
               S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
       switch (errno) {
       case EEXIST: {
@@ -271,15 +271,15 @@ public:
       }
     }
 
-    child.path = path + "/" + name;
-    child.parent = this;
+    child.path_ = path_ + "/" + name;
+    child.parent_ = this;
     return Result::SUCCESS;
   }
 
   Result enable_cpu(const int cpu) {
     std::set<int> cpus = get_cpus();
     cpus.insert(cpu);
-    write_cpus(cpus);
+    return write_cpus(cpus);
   }
 
   Result enable_cpus(const std::set<int> &cpus) {
@@ -287,11 +287,12 @@ public:
     for (auto cpu : cpus) {
       finalCpus.insert(cpu);
     }
-    write_cpus(finalCpus);
+    return write_cpus(finalCpus);
   }
 
+  // FIXME: check error
   Result write_cpus(std::set<int> cpus) {
-    std::ofstream os(path + "/" + "cpuset.cpus");
+    std::ofstream os(path_ + "/cpuset.cpus");
     bool comma = false;
     for (auto cpu : cpus) {
       if (comma)
@@ -299,10 +300,12 @@ public:
       os << cpu << "-" << cpu;
       comma = true;
     }
+    return Result::SUCCESS;
   }
 
+  // FIXME: check write
   Result write_mems(std::set<int> mems) {
-    std::ofstream os(path + "/" + "cpuset.mems");
+    std::ofstream os(path_ + "/cpuset.mems");
     bool comma = false;
     for (auto mem : mems) {
       if (comma)
@@ -310,23 +313,32 @@ public:
       os << mem << "-" << mem;
       comma = true;
     }
+    return Result::SUCCESS;
   }
 
   Result enable_mem(const int mem) {
     std::set<int> mems = get_mems();
     mems.insert(mem);
-    write_mems(mems);
+    return write_mems(mems);
+  }
+
+  Result enable_mems(const std::set<int> &mems) {
+    std::set<int> finalMems = get_mems();
+    for (auto mem : mems) {
+      finalMems.insert(mem);
+    }
+    return write_mems(finalMems);
   }
 
   Result destroy() {
     // remove all child cpu sets
 
     // move all attached processes back to parent
-    assert(parent);
-    migrate_tasks_to(*parent);
+    assert(parent_);
+    migrate_tasks_to(*parent_);
 
     // remove with rmdir
-    if (rmdir(path.c_str())) {
+    if (rmdir(path_.c_str())) {
       switch (errno) {
       default:
         std::cerr << "unhandled error in rmdir: " << strerror(errno) << "\n";
@@ -334,7 +346,7 @@ public:
       }
     }
 
-    path = "";
+    path_ = "";
     return Result::SUCCESS;
   }
 
@@ -342,7 +354,8 @@ public:
 };
 
   std::ostream &operator<<(std::ostream &s, const CpuSet &c) {
-    s << c.path;
+    s << c.path_;
+    return s;
   }
 
 } // namespace perfect
