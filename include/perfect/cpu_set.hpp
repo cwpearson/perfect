@@ -15,15 +15,6 @@
 #include "init.hpp"
 #include "result.hpp"
 
-#define SUCCESS_OR_RETURN(stmt) \
-{\
-  Result _ret; \
-  _ret = (stmt); \
-if (_ret != Result::SUCCESS) {\
-  return _ret;\
-}\
-}
-
 std::set<int> operator-(const std::set<int> &lhs, const std::set<int> &rhs) {
   std::set<int> result;
   for (auto e : lhs) {
@@ -206,7 +197,7 @@ public:
   // migrate tasks in this cpu set to another
   Result migrate_tasks_to(CpuSet &other) {
     // enable memory migration in other
-    SUCCESS_OR_RETURN(other.enable_memory_migration());
+    PERFECT_SUCCESS_OR_RETURN(other.enable_memory_migration());
 
     // read this tasks and write each line to other.tasks
     std::ifstream is(path_ + "/tasks");
@@ -244,7 +235,7 @@ public:
 
   // object representing the root CPU set
   static Result get_root(CpuSet &root) {
-    SUCCESS_OR_RETURN(CpuSet::init());
+    PERFECT_SUCCESS_OR_RETURN(CpuSet::init());
     root.path_ = "/dev/cpuset";
     root.parent_ = nullptr;
     return Result::SUCCESS;
