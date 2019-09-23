@@ -18,6 +18,7 @@ CPU/GPU performance control library for benchmarking
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
+- [x] Place sensitive/non-sensitive tasks on different cores
 
 ## Installing
 
@@ -86,14 +87,22 @@ See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 
 ### CPU Shielding
 
-`perfect` can restrict which tasks run on which CPUs
+`perfect` can restrict which tasks run on which CPUs through the Linux [cpuset](http://man7.org/linux/man-pages/man7/cpuset.7.html) functionality.
 
 See [tools/shield.cpp](tools/shield.cpp).
 
-* `static CpuSet::get_root()`: get the root CpuSet
+```c++
+#include "perfect/cpu_set.hpp"
+```
+
+* `static CpuSet::get_root()`: initialize and get the root CpuSet
 * `Result CpuSet::make_child(CpuSet &cpuset)`: create a child cpu set
 * `Result CpuSet::migrate_tasks_to(CpuSet &other)`: migrate all tasks to another CpuSet
 * `Result CpuSet::migrate_self_to(CpuSet &other)`: migrate caller task to another CpuSet
+* `std::set<int> CpuSet::get_cpus()`: get the CPUs in a CpuSet
+* `std::set<int> CpuSet::get_mems()`: get the memories in a CpuSet
+* `std::set<int> operator-(std::set<int> lhs, std::set<int> rhs)`: return `lhs` without any elements from `rhs`
+* `Result CpuSet::destroy()`: destroy a CpuSet after moving all tasks back to the parent
 
 
 ### CPU Turbo
