@@ -17,6 +17,7 @@ namespace perfect {
 enum class Result {
   NO_PERMISSION,
   NOT_SUPPORTED,
+  NO_TASK, // task not found in CpuSet
   NVML_NO_PERMISSION,
   NVML_NOT_SUPPORTED,
   NVML_UNINITIALIZED,

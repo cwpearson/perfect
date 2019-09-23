@@ -10,29 +10,75 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "init.hpp"
 #include "result.hpp"
 
-// like "8" or "8-10"
-std::set<int> parse_token(const std::string &s) {
+#define SUCCESS_OR_RETURN(stmt) \
+{\
+  Result _ret; \
+  _ret = (stmt); \
+if (_ret != Result::SUCCESS) {\
+  return _ret;\
+}\
+}
+
+std::set<int> operator-(const std::set<int> &lhs, const std::set<int> &rhs) {
   std::set<int> result;
-  size_t idx = 0;
-  int first = std::stoi(s, &idx);
+  for (auto e : lhs) {
+    if (0 == rhs.count(e)) {
+      result.insert(e);
+    }
+  }
+  return result;
+}
+
+std::string remove_space(const std::string &s) {
+  std::string result;
+
+  for (auto c : s) {
+    if (!isspace(c)) {
+      result += c;
+    }
+  }
+  return result;
+}
+
+// like "8" or "8-10"
+std::set<int> parse_token(const std::string &token) {
+  // std::cerr << "parse_token: parsing '" << s << "'\n";
+  std::set<int> result;
+
+  std::string s = token;
+  // ignore empty string
+  if (s.empty()) {
+    return result;
+  }
+
+  // remove newline
+  s = remove_space(s);
+
+  size_t pos = 0;
+
+  int first = std::stoi(s, &pos);
+  // std::cerr << "parse_token: found '" << first << "'\n";
 
   // single int
-  if (idx == s.length()) {
+  if (pos == s.length()) {
     result.insert(first);
     return result;
   }
 
   // next char should be a "-"
-  assert(s[idx] == '-');
+  assert(s[pos] == '-');
 
-  idx += 1;
-  int second = std::stoi(s, &idx);
+  std::string rest = s.substr(pos + 1);
+  int second = std::stoi(rest, &pos);
+  // std::cerr << "parse_token: found '" << second << "'\n";
 
   // insert first-second
+  // std::cerr << "parse_token: range " << first << " to " << second << "\n";
   for (int i = first; i <= second; ++i) {
     result.insert(i);
   }
@@ -40,20 +86,19 @@ std::set<int> parse_token(const std::string &s) {
 }
 
 std::set<int> parse_cpuset(const std::string &s) {
-  std::string delim = ",";
+  // std::cerr << "parse_cpuset: parsing '" << s << "'\n";
   std::set<int> result;
 
-  auto begin = 0u;
-  auto end = s.find(delim);
-  while (end != std::string::npos) {
-    std::string token = s.substr(begin, end - begin);
-    auto newCpus = parse_token(token);
-    for (auto cpu : newCpus) {
-      result.insert(cpu);
-    }
+  std::string token;
+  std::stringstream ss(s);
+  while (std::getline(ss, token, ',')) {
 
-    begin = end + delim.length();
-    end = s.find(delim, begin);
+    if ("\n" != token) {
+      auto newCpus = parse_token(token);
+      for (auto cpu : newCpus) {
+        result.insert(cpu);
+      }
+    }
   }
 
   return result;
@@ -81,6 +126,7 @@ public:
         break;
       }
       case EACCES:
+        // std::cerr << "access error in mkdir: " << strerror(errno) << "\n";
         return Result::NO_PERMISSION;
       case ENOENT:
       case EROFS:
@@ -98,10 +144,13 @@ public:
         }
         case EBUSY: {
           // FIXME: something is mounted here, assume it is what we want
+          // std::cerr << "EBUSY in mount: " << strerror(errno) << "\n";
           return Result::SUCCESS;
         }
-        case EACCES:
-          return Result::NO_PERMISSION;
+        case EPERM: {
+        // std::cerr << "EPERM in mount: " << strerror(errno) << "\n";
+        return Result::NO_PERMISSION;
+        }
         case ENOENT:
         case EROFS:
         default:
@@ -110,40 +159,81 @@ public:
         }
       }
     }
+    return Result::SUCCESS;
   }
 
-  std::set<int> get_cpus() {
+  std::string get_raw_cpus() {
     std::ifstream is(path + "/cpuset.cpus");
     std::stringstream ss;
     ss << is.rdbuf();
-    return parse_cpuset(ss.str());
+    return remove_space(ss.str());
   }
 
-  std::set<int> get_mems() {
+  std::string get_raw_mems() {
     std::ifstream is(path + "/cpuset.mems");
     std::stringstream ss;
     ss << is.rdbuf();
-    return parse_cpuset(ss.str());
+    return remove_space(ss.str());
   }
 
-  // migrate tasks in this cpu set to another
-  void migrate_tasks_to(CpuSet &other) {
+  std::set<int> get_cpus() { return parse_cpuset(get_raw_cpus()); }
+
+  std::set<int> get_mems() { return parse_cpuset(get_raw_mems()); }
+
+  // migrate the caller task from this cpu set to another
+  Result migrate_self_to(CpuSet &other) {
     // enable memory migration in other
     other.enable_memory_migration();
+
+    // get my pid
+    pid_t self = this_task();
 
     // read this tasks and write each line to other.tasks
     std::ifstream is(path + "/tasks");
     std::string line;
     while (std::getline(is, line)) {
-      std::cerr << "migrating task " << line << " to " << other.path << "\n";
-      other.write_task(line);
+      line = remove_space(line);
+      if (std::to_string(self) == line) {
+        // std::cerr << "migrating self task " << line << " to " << other.path
+        //           << "\n";
+        other.write_task(line);
+        return Result::SUCCESS;
+      }
     }
+    return Result::NO_TASK;
   }
 
-  void enable_memory_migration() {
-    std::cerr << "enable memory migration in " << path << "\n";
-    std::ofstream os(path + "/" + "cpuset.memory_migrate");
-    os << "1";
+  // migrate tasks in this cpu set to another
+  Result migrate_tasks_to(CpuSet &other) {
+    // enable memory migration in other
+    SUCCESS_OR_RETURN(other.enable_memory_migration());
+
+    // read this tasks and write each line to other.tasks
+    std::ifstream is(path + "/tasks");
+    std::string line;
+    while (std::getline(is, line)) {
+      // std::cerr << "migrating task " << line << " to " << other.path << "\n";
+      other.write_task(line);
+    }
+
+    return Result::SUCCESS;
+  }
+
+  Result enable_memory_migration() {
+    std::ofstream ofs(path + "/" + "cpuset.memory_migrate");
+    ofs << "1";
+    ofs.close();
+    if (ofs.fail()) {
+    switch (errno) {
+    case EACCES:
+      return Result::NO_PERMISSION;
+    case ENOENT:
+      return Result::NOT_SUPPORTED;
+    default:
+      return Result::UNKNOWN;
+    }
+  }
+    return Result::SUCCESS;
   }
 
   void write_task(const std::string &task) {
@@ -154,15 +244,14 @@ public:
 
   // object representing the root CPU set
   static Result get_root(CpuSet &root) {
-    Result result;
-    result = CpuSet::init();
-    if (Result::SUCCESS != result) {
-      return result;
-    }
+    SUCCESS_OR_RETURN(CpuSet::init());
     root.path = "/dev/cpuset";
     root.parent = nullptr;
     return Result::SUCCESS;
   }
+
+  // the ID of this task
+  static pid_t this_task() { return getpid(); }
 
   Result make_child(CpuSet &child, const std::string &name) {
 
@@ -193,13 +282,21 @@ public:
     write_cpus(cpus);
   }
 
+  Result enable_cpus(const std::set<int> &cpus) {
+    std::set<int> finalCpus = get_cpus();
+    for (auto cpu : cpus) {
+      finalCpus.insert(cpu);
+    }
+    write_cpus(finalCpus);
+  }
+
   Result write_cpus(std::set<int> cpus) {
     std::ofstream os(path + "/" + "cpuset.cpus");
     bool comma = false;
     for (auto cpu : cpus) {
       if (comma)
         os << ",";
-      os << cpu << "-" << cpu + 1;
+      os << cpu << "-" << cpu;
       comma = true;
     }
   }
@@ -210,7 +307,7 @@ public:
     for (auto mem : mems) {
       if (comma)
         os << ",";
-      os << mem << "-" << mem + 1;
+      os << mem << "-" << mem;
       comma = true;
     }
   }
@@ -240,6 +337,12 @@ public:
     path = "";
     return Result::SUCCESS;
   }
+
+
 };
+
+  std::ostream &operator<<(std::ostream &s, const CpuSet &c) {
+    s << c.path;
+  }
 
 } // namespace perfect
