@@ -81,3 +81,12 @@ inline void check(Result result, const char *file, const int line) {
 } // namespace perfect
 
 #define PERFECT(stmt) check(stmt, __FILE__, __LINE__);
+
+#define PERFECT_SUCCESS_OR_RETURN(stmt) \
+{\
+  Result _ret; \
+  _ret = (stmt); \
+if (_ret != Result::SUCCESS) {\
+  return _ret;\
+}\
+}

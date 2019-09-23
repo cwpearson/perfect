@@ -18,7 +18,11 @@ CPU/GPU performance control library for benchmarking
 - [x] Disable GPU turbo (nvidia)
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
+<<<<<<< HEAD
 - [x] Place sensitive/non-sensitive tasks on different cores
+=======
+- [x] Flush file system caches (linux)
+>>>>>>> master
 
 ## Installing
 
@@ -104,6 +108,21 @@ See [tools/shield.cpp](tools/shield.cpp).
 * `std::set<int> operator-(std::set<int> lhs, std::set<int> rhs)`: return `lhs` without any elements from `rhs`
 * `Result CpuSet::destroy()`: destroy a CpuSet after moving all tasks back to the parent
 
+### Flush file system caches
+
+`perfect` can drop various filesystem caches
+
+See [tools/sync_drop_caches.cpp](tools/sync_drop_caches.cpp)
+
+```c++
+#include "perfect/drop_caches.hpp"
+```
+
+* `Result sync()`: flush filesystem caches to disk
+* `Result drop_caches(DropCaches_t mode)`: remove file system caches
+  * `mode = PAGECACHE`: drop page caches
+  * `mode = ENTRIES`: drop dentries and inodes
+  * `mode = PAGECACHE | ENTRIES`: both
 
 ### CPU Turbo
 
