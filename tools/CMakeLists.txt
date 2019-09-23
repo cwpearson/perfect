@@ -37,3 +37,5 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} \
 add_executable(enable-turbo enable_turbo.cpp)
 target_link_libraries(enable-turbo perfect)
 
+add_executable(shield shield.cpp)
+target_link_libraries(shield perfect)
