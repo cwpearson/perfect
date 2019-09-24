@@ -196,3 +196,8 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
     - [ ] reserve cores 
     - [ ] set process priority
     - [ ] disable ASLR
+
+## Related
+
+* [LLVM benchmarking instructions](https://llvm.org/docs/Benchmarking.html#linux) covering ASLR, Linux governor, cpuset shielding, SMT, and Intel turbo.
+* [easyperf.net](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) blog post discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
