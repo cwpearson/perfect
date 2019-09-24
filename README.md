@@ -175,6 +175,8 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 ## Changelog
 
+* v0.3.0
+    * Add filesystem cache interface
 * v0.2.0
     * add GPU monitoring
     * Make CUDA optional
