@@ -2,12 +2,9 @@
 
 | Branch | Status |
 |-|-|
-| master |[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fcwpearson%2Fperfect%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/cwpearson/perfect/goto?ref=master)|
+| master |[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fcwpearson%2Fperfect%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/cwpearson/perfect/goto?ref=master) |
 
-CPU/GPU performance control library for benchmarking
-* x86
-* POWER
-* Nvidia
+CPU/GPU Performance control library for benchmarking on Linux, x86, POWER, and Nvidia.
 
 ## Features
 
@@ -19,6 +16,9 @@ CPU/GPU performance control library for benchmarking
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
 - [x] Flush file system caches (linux)
+
+## Contributors
+* [Carl Pearson](https://cwpearson.github.io)
 
 ## Installing
 
@@ -204,3 +204,4 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 * [LLVM benchmarking instructions](https://llvm.org/docs/Benchmarking.html#linux) covering ASLR, Linux governor, cpuset shielding, SMT, and Intel turbo.
 * [easyperf.net](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) blog post discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
+* [temci](https://github.com/parttimenerd/temci) benchmarking tool for cpu sheilding and disabling hyperthreading, among other things.
