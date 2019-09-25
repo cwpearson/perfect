@@ -24,6 +24,7 @@ Result write_str(const std::string &path, const std::string &val) {
       std::cerr << "EPERM when writing to " << path << "\n";
       return Result::NO_PERMISSION;
     case ENOENT:
+    std::cerr << "ENOENT when writing to " << path << "\n";
       return Result::NOT_SUPPORTED;
     default:
       return Result::UNKNOWN;
