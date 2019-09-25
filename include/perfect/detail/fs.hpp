@@ -10,6 +10,7 @@ namespace detail {
 Result write_str(const std::string &path, const std::string &val) {
   std::ofstream ofs(path);
   if (ofs.fail()) {
+    std::cerr << "failed to open " << path << "\n";
     return Result::NOT_SUPPORTED;
   }
 
