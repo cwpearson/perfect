@@ -12,6 +12,7 @@
 #include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/personality.h>
 
 #include "perfect/result.hpp"
 
@@ -86,6 +87,26 @@ size_t cache_linesize() {
 #else
 #error "unsupported platform"
 #endif
+}
+
+namespace detail {
+Result get_personality(int &persona) {
+  int ret = personality(0xffffffff);
+  if (-1 == ret) {
+    return Result::UNKNOWN;
+  } else {
+    persona = ret;
+  }
+  return Result::SUCCESS;
+}
+
+Result set_personality(const int persona) {
+  int ret = personality(persona);
+  if (-1 == ret) {
+    return Result::UNKNOWN;
+  }
+  return Result::SUCCESS;
+}
 }
 
 } // namespace perfect

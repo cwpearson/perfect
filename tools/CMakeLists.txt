@@ -39,3 +39,6 @@ target_link_libraries(enable-turbo perfect)
 
 add_executable(sync-drop-caches sync_drop_caches.cpp)
 target_link_libraries(sync-drop-caches perfect)
+
+add_executable(no-aslr no_aslr.cpp)
+target_link_libraries(no-aslr perfect)

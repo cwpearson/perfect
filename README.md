@@ -16,6 +16,7 @@ CPU/GPU Performance control library for benchmarking on Linux, x86, POWER, and N
 - [x] Flush addresses from cache (amd64, POWER)
 - [x] CUDA not required (GPU functions will not be compiled)
 - [x] Flush file system caches (linux)
+- [x] Disable ASLR (linux)
 
 ## Contributors
 * [Carl Pearson](https://cwpearson.github.io)
@@ -84,6 +85,20 @@ See [examples/gpu_monitor.cu](examples/gpu_monitor.cu)
 * `void Monitor::stop()`: terminate the monitor
 * `void Monitor::pause()`: pause the monitor thread
 * `void Monitor::resume()`: resume the monitor thread
+
+### Disable ASLR
+
+`perfect` can disable ASLR
+
+See [tools/no_aslr.cpp](tools/no_aslr.cpp)
+
+```c++
+#include "perfect/aslr.hpp"
+```
+
+* `Result disable_aslr()`: disable ASLR
+* `Result get_aslr(AslrState &state)`: save the current ASLR state
+* `Result set_aslr(const AslrState &state)`: set a previously-saved ASLR state
 
 ### Flush file system caches
 
@@ -192,7 +207,6 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 - [ ] only monitor certain GPUs
 - [ ] hyperthreading interface
-- [ ] ASLR interface
 - [ ] process priority interface
 - [ ] A wrapper utility
     - [ ] disable hyperthreading
