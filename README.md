@@ -190,6 +190,10 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 ## Changelog
 
+* v0.4.0
+    * Add ASLR interface
+    * Disambiguate some filesystem errors
+    * Fix some powerpc namespace issues
 * v0.3.0
     * Add filesystem cache interface
 * v0.2.0
