@@ -6,7 +6,6 @@ using namespace perfect;
 
 int main(void) {
 
-  Result ret;
   CpuTurboState state;
 
   perfect::init();
