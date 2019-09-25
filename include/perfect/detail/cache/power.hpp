@@ -1,5 +1,8 @@
 #pragma once
 
+namespace perfect {
+namespace detail {
+
 inline void flush_line(void *p) {
 
   /*
@@ -32,4 +35,7 @@ inline void barrier_all() {
                : "memory");
 
 
+}
+
+}
 }
