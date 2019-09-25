@@ -45,3 +45,20 @@ target_link_libraries(sync-drop-caches perfect)
 
 add_executable(no-aslr no_aslr.cpp)
 target_link_libraries(no-aslr perfect)
+
+add_executable(max-os-perf max_os_perf.cpp)
+target_link_libraries(max-os-perf perfect)
+
+add_executable(min-os-perf min_os_perf.cpp)
+target_link_libraries(min-os-perf perfect)
+
+## OpenMP
+find_package(OpenMP)
+if (OpenMP_FOUND)
+  add_executable(stress stress.cpp)
+  target_link_libraries(stress perfect)
+  target_link_libraries(stress OpenMP::OpenMP_CXX)
+else(OpenMP_FOUND)
+  message(WARNING "didn't find OpenMP, some benchmarks will be unavailable.")
+endif(OpenMP_FOUND)
+

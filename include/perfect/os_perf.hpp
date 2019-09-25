@@ -40,6 +40,14 @@ Result os_perf_state_maximum(const int cpu) {
     #endif
 }
 
+Result os_perf_state_minimum(const int cpu) {
+    #ifdef __linux__
+    return set_governor(cpu, "powersave");
+    #else
+    #error "unsupported platform"
+    #endif
+}
+
 Result set_os_perf_state(const int cpu, OsPerfState state) {
         #ifdef __linux__
     return set_governor(cpu, state.governor);
