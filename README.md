@@ -205,3 +205,4 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 * [LLVM benchmarking instructions](https://llvm.org/docs/Benchmarking.html#linux) covering ASLR, Linux governor, cpuset shielding, SMT, and Intel turbo.
 * [easyperf.net](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) blog post discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
 * [temci](https://github.com/parttimenerd/temci) benchmarking tool for cpu sheilding and disabling hyperthreading, among other things.
+* [perflock](https://github.com/aclements/perflock) tool for locking CPU frequency scaling domains
