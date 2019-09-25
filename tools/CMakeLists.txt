@@ -52,6 +52,8 @@ target_link_libraries(max-os-perf perfect)
 add_executable(min-os-perf min_os_perf.cpp)
 target_link_libraries(min-os-perf perfect)
 
+add_executable(addrs addrs.cpp)
+
 ## OpenMP
 find_package(OpenMP)
 if (OpenMP_FOUND)
