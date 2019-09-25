@@ -190,6 +190,12 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 ## Changelog
 
+* v0.5.0
+    * add tools/stress
+    * add tools/max-os-perf
+    * add tools/min-os-perf
+    * add tools/enable-cpu-turbo
+    * add tools/disable-cpu-turbo
 * v0.4.0
     * Add ASLR interface
     * Disambiguate some filesystem errors
