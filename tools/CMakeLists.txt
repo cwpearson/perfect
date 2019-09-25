@@ -34,8 +34,11 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} \
  -Wfatal-errors\
  ")
 
-add_executable(enable-turbo enable_turbo.cpp)
-target_link_libraries(enable-turbo perfect)
+add_executable(enable-cpu-turbo enable_cpu_turbo.cpp)
+target_link_libraries(enable-cpu-turbo perfect)
+
+add_executable(disable-cpu-turbo disable_cpu_turbo.cpp)
+target_link_libraries(disable-cpu-turbo perfect)
 
 add_executable(sync-drop-caches sync_drop_caches.cpp)
 target_link_libraries(sync-drop-caches perfect)
