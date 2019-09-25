@@ -57,6 +57,8 @@ const char *get_string(const Result &result) {
     return "nvidia-ml returned not supported";
   case Result::NVML_NO_PERMISSION:
     return "nvidia-ml returned no permission";
+  case Result::NVML_UNINITIALIZED:
+    return "nvidia-ml returned uninitialized";
   case Result::NOT_SUPPORTED:
     return "unsupported operation";
   default:
