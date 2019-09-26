@@ -154,10 +154,13 @@ int main(int argc, char **argv) {
 
   // handle CPU turbo
   perfect::CpuTurboState cpuTurboState;
+  PERFECT(perfect::get_cpu_turbo_state(&cpuTurboState));
   if (!cpuTurbo) {
     std::cerr << "disabling cpu turbo\n";
-    PERFECT(perfect::get_cpu_turbo_state(&cpuTurboState));
     PERFECT(perfect::disable_cpu_turbo());
+  } else {
+    std::cerr << "enabling cpu turbo\n";
+    PERFECT(perfect::enable_cpu_turbo());    
   }
 
   // handle governor
@@ -193,10 +196,8 @@ int main(int argc, char **argv) {
   }
 
   // restore original turbo state
-  if (!cpuTurbo) {
     std::cerr << "restore CPU turbo\n";
     PERFECT(perfect::set_cpu_turbo_state(cpuTurboState));
-  }
 
   if (maxOsPerf) {
     std::cerr << "restore os performance state\n";
