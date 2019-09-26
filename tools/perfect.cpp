@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
               option("--no-drop-cache").set(dropCaches, false).doc("do not drop filesystem caches"),
               option("--no-max-perf").set(maxOsPerf, false).doc("do not max os perf"),
               option("--no-aslr").set(aslr, false).doc("disable ASLR"),
-              option("--no-cpu-turbo").set(cpuTurbo, false).doc("disable CPU turbo"),
+              option("--cpu-turbo").set(cpuTurbo, true).doc("enable CPU turbo"),
               // run everything after "--"
               required("--") & greedy(values("cmd", program))
 
