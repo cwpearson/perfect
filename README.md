@@ -148,9 +148,9 @@ See [examples/os_perf.cpp](examples/os_perf.cpp).
 #include "perfect/os_perf.hpp"
 ```
 
-* `Result get_os_perf_state(OsPerfState *state, const int cpu)`: Save the current OS governor mode for CPU `cpu`.
+* `Result get_os_perf_state(OsPerfState &state)`: Save the current OS governor mode for all CPUs.
 * `Result os_perf_state_maximum(const int cpu)`: Set the OS governor to it's maximum performance mode.
-* `Result set_os_perf_state(const int cpu, OsPerfState state)`: Restore a previously-saved OS governor mode.
+* `Result set_os_perf_state(OsPerfState state)`: Restore a previously-saved OS governor mode.
 
 ### GPU Turbo
 
@@ -270,3 +270,7 @@ heap:  93824994414192
 * [easyperf.net](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) blog post discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
 * [temci](https://github.com/parttimenerd/temci) benchmarking tool for cpu sheilding and disabling hyperthreading, among other things.
 * [perflock](https://github.com/aclements/perflock) tool for locking CPU frequency scaling domains
+
+## Acks
+
+Uses [muellan/clipp](https://github.com/muellan/clipp) for cli option parsing.

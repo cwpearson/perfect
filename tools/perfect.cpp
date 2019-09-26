@@ -13,6 +13,7 @@
 #include "perfect/aslr.hpp"
 #include "perfect/cpu_set.hpp"
 #include "perfect/cpu_turbo.hpp"
+#include "perfect/os_perf.hpp"
 #include "perfect/detail/os/linux.hpp"
 
 // argv should be null-terminated
@@ -66,10 +67,11 @@ int fork_child(char *const *argv) {
 int main(int argc, char **argv) {
   using namespace clipp;
 
-  int numUnshielded = 0;
-  int numShielded = 0;
-  bool noAslr = false;
-  bool noCpuTurbo = false;
+  size_t numUnshielded = 0;
+  size_t numShielded = 0;
+  bool aslr = false;
+  bool cpuTurbo = false;
+  bool maxOsPerf = true;
 
   std::vector<std::string> program;
 
@@ -79,8 +81,11 @@ int main(int argc, char **argv) {
        (option("-s") &
         value("SH", numShielded).doc("number of shielded CPUs")));
 
-  auto cli = (shieldGroup, option("--no-aslr").set(noAslr).doc("disable ASLR"),
-              option("--no-cpu-turbo").set(noCpuTurbo).doc("disable CPU turbo"),
+
+  auto cli = (shieldGroup, 
+              option("--no-max-perf").set(maxOsPerf, false).doc("do not max os perf"),
+              option("--no-aslr").set(aslr, false).doc("disable ASLR"),
+              option("--no-cpu-turbo").set(cpuTurbo, false).doc("disable CPU turbo"),
               // run everything after "--"
               required("--") & greedy(values("cmd", program))
 
@@ -139,15 +144,27 @@ int main(int argc, char **argv) {
   }
 
   // handle aslr
-  if (noAslr) {
+  if (!aslr) {
+    std::cerr << "disable ASLR for this process\n";
     PERFECT(perfect::disable_aslr());
   }
 
+  // handle CPU turbo
   perfect::CpuTurboState cpuTurboState;
-  if (noCpuTurbo) {
+  if (!cpuTurbo) {
     std::cerr << "disabling cpu turbo\n";
     PERFECT(perfect::get_cpu_turbo_state(&cpuTurboState));
     PERFECT(perfect::disable_cpu_turbo());
+  }
+
+  // handle governor
+  perfect::OsPerfState osPerfState;
+  if (maxOsPerf) {
+    std::cerr << "set max performance state\n";
+    PERFECT(perfect::get_os_perf_state(osPerfState));
+    for (auto cpu : perfect::cpus()) {
+      PERFECT(perfect::os_perf_state_maximum(cpu));
+    } 
   }
 
   // parent should return
@@ -167,9 +184,14 @@ int main(int argc, char **argv) {
   }
 
   // restore original turbo state
-  if (noCpuTurbo) {
+  if (!cpuTurbo) {
     std::cerr << "restore CPU turbo\n";
     PERFECT(perfect::set_cpu_turbo_state(cpuTurboState));
+  }
+
+  if (maxOsPerf) {
+    std::cerr << "restore os performance state\n";
+    PERFECT(perfect::set_os_perf_state(osPerfState));
   }
 
   return status;
