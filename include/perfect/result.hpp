@@ -17,6 +17,7 @@ namespace perfect {
 enum class Result {
   NO_PERMISSION,
   NOT_SUPPORTED,
+  NO_TASK,
   NVML_NO_PERMISSION,
   NVML_NOT_SUPPORTED,
   NVML_UNINITIALIZED,
@@ -51,6 +52,10 @@ const char *get_string(const Result &result) {
     return "success";
   case Result::NO_PERMISSION:
     return "no permission";
+  case Result::NOT_SUPPORTED:
+    return "unsupported operation";
+  case Result::NO_TASK:
+    return "no such task";
   case Result::UNKNOWN:
     return "unknown error";
   case Result::NVML_NOT_SUPPORTED:
@@ -59,8 +64,7 @@ const char *get_string(const Result &result) {
     return "nvidia-ml returned no permission";
   case Result::NVML_UNINITIALIZED:
     return "nvidia-ml returned uninitialized";
-  case Result::NOT_SUPPORTED:
-    return "unsupported operation";
+
   default:
     assert(0 && "unexpected perfect::Result");
   }
