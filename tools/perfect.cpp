@@ -15,6 +15,7 @@
 #include "perfect/cpu_turbo.hpp"
 #include "perfect/os_perf.hpp"
 #include "perfect/detail/os/linux.hpp"
+#include "perfect/drop_caches.hpp"
 
 // argv should be null-terminated
 int fork_child(char *const *argv) {
@@ -72,6 +73,7 @@ int main(int argc, char **argv) {
   bool aslr = false;
   bool cpuTurbo = false;
   bool maxOsPerf = true;
+  bool dropCaches = true;
 
   std::vector<std::string> program;
 
@@ -83,6 +85,7 @@ int main(int argc, char **argv) {
 
 
   auto cli = (shieldGroup, 
+              option("--no-drop-cache").set(dropCaches, false).doc("do not drop filesystem caches"),
               option("--no-max-perf").set(maxOsPerf, false).doc("do not max os perf"),
               option("--no-aslr").set(aslr, false).doc("disable ASLR"),
               option("--no-cpu-turbo").set(cpuTurbo, false).doc("disable CPU turbo"),
@@ -165,6 +168,12 @@ int main(int argc, char **argv) {
     for (auto cpu : perfect::cpus()) {
       PERFECT(perfect::os_perf_state_maximum(cpu));
     } 
+  }
+
+  // handle file system caches
+  if (dropCaches) {
+    std::cerr << "clearing file system cache\n";
+    PERFECT(perfect::drop_caches());
   }
 
   // parent should return

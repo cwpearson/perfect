@@ -116,7 +116,7 @@ See [tools/sync_drop_caches.cpp](tools/sync_drop_caches.cpp)
 ```
 
 * `Result sync()`: flush filesystem caches to disk
-* `Result drop_caches(DropCaches_t mode)`: remove file system caches
+* `Result drop_caches(DropCaches_t mode = DropCaches_t(PAGECACHE | ENTRIES))`: remove file system caches
   * `mode = PAGECACHE`: drop page caches
   * `mode = ENTRIES`: drop dentries and inodes
   * `mode = PAGECACHE | ENTRIES`: both

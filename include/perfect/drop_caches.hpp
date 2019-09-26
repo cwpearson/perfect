@@ -24,7 +24,7 @@ Result sync() {
     return Result::SUCCESS;
 }
 
-Result drop_caches(const DropCaches_t mode) {
+Result drop_caches(const DropCaches_t mode = DropCaches_t(PAGECACHE | ENTRIES)) {
     using detail::write_str;
     const std::string path = "/proc/sys/vm/drop_caches";
     if (mode & PAGECACHE & ENTRIES) {
