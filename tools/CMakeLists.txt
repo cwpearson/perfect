@@ -54,6 +54,10 @@ target_link_libraries(min-os-perf perfect)
 
 add_executable(addrs addrs.cpp)
 
+add_executable(perfect-cli perfect.cpp)
+target_link_libraries(perfect-cli perfect)
+target_include_directories(perfect-cli PUBLIC thirdparty)
+
 ## OpenMP
 find_package(OpenMP)
 if (OpenMP_FOUND)
