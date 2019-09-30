@@ -1,7 +1,9 @@
 #include <cassert>
 #include <cerrno>
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #ifdef __linux__
@@ -155,6 +157,11 @@ int main(int argc, char **argv) {
   std::string stdoutPath;
   std::string stderrPath;
   int iters = 1;
+  int sleepMs = 1000;
+
+  bool help = false;
+
+  auto helpMode = option("-h", "--help").set(help).doc("show help");
 
   auto shieldGroup = ((option("-u").doc("number of unshielded CPUs") &
                        value("INT", numUnshielded)) |
@@ -184,17 +191,26 @@ int main(int argc, char **argv) {
                   (option("--stderr").doc("redirect child stderr") &
                    value("PATH", stderrPath)));
 
-  auto cli = ((noModMode | modMode),
-              (option("-n").doc("run multiple times") & value("INT", iters)),
-              // run everything after "--"
-              required("--") & greedy(values("cmd", program))
+  auto cli =
+      helpMode |
+      ((noModMode | modMode),
+       (option("--sleep-ms").doc("sleep before run") & value("INT", sleepMs)),
+       (option("-n").doc("run multiple times") & value("INT", iters)), helpMode,
+       // run everything after "--"
+       required("--") & greedy(values("cmd", program))
 
-  );
+      );
 
   if (!parse(argc, argv, cli)) {
     auto fmt = doc_formatting{}.doc_column(31);
     std::cout << make_man_page(cli, argv[0], fmt);
     return -1;
+  }
+
+  if (help) {
+    auto fmt = doc_formatting{}.doc_column(31);
+    std::cout << make_man_page(cli, argv[0], fmt);
+    return 0;
   }
 
   // open the redirect files, if needed
@@ -331,6 +347,12 @@ int main(int argc, char **argv) {
     if (dropCaches) {
       std::cerr << "clearing file system cache\n";
       PERFECT(perfect::drop_caches());
+    }
+
+    // sleep before each run
+    if (sleepMs) {
+      std::cerr << "sleep " << sleepMs << " ms before run\n";
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
     }
 
     std::cerr << "exec ";
