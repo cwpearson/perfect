@@ -38,9 +38,6 @@ jobs:
         g++ --version
         nvcc --version
         make VERBOSE=1
-    - name: test
-      run: |
-        build/tools/perfect-cli -h
 
   build:
     runs-on: ubuntu-latest
