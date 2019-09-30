@@ -38,6 +38,10 @@ jobs:
         g++ --version
         nvcc --version
         make VERBOSE=1
+    - name: test
+      run: |
+        tools/perfect-cli -h
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -61,3 +65,6 @@ jobs:
         cd build
         g++ --version
         make VERBOSE=1
+    - name: test
+      run: |
+        tools/perfect-cli -h
