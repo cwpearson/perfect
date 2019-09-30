@@ -4,21 +4,31 @@
 #include <string>
 #include <vector>
 
+#ifdef __linux__
+#include <fcntl.h>
+#include <pwd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#else
+#error "unsupported platform"
+#endif
 
 #include "clipp/clipp.h"
+#include "nonstd/optional.hpp"
 
 #include "perfect/aslr.hpp"
 #include "perfect/cpu_set.hpp"
 #include "perfect/cpu_turbo.hpp"
-#include "perfect/os_perf.hpp"
 #include "perfect/detail/os/linux.hpp"
 #include "perfect/drop_caches.hpp"
+#include "perfect/os_perf.hpp"
 
 // argv should be null-terminated
-int fork_child(char *const *argv) {
+// outf and errf are file descriptors to where stdout and stderr should be
+// redirected write stdout to out and stderr to err, if not null
+int fork_child(char *const *argv, int outf, int errf) {
 
   pid_t pid;
   int status;
@@ -30,7 +40,73 @@ int fork_child(char *const *argv) {
   } else if (pid == 0) {
     // in the child process
 
-    // skip the first argument, which is this program
+    if (outf > 0) {
+      std::cerr << "redirecting child stdout to file\n";
+      if (dup2(outf, 1)) {
+        std::cerr << "dup2 error: " << strerror(errno) << "\n";
+        /*
+
+    EBADF
+        oldfd isn't an open file descriptor, or newfd is out of the allowed
+    range for file descriptors. EBUSY (Linux only) This may be returned by
+    dup2() or dup3() during a race condition with open(2) and dup(). EINTR The
+    dup2() or dup3() call was interrupted by a signal; see signal(7). EINVAL
+        (dup3()) flags contain an invalid value. Or, oldfd was equal to newfd.
+    EMFILE
+        The process already has the maximum number of file descriptors open and
+    tried to open a new one.
+        */
+      }
+
+      if (close(outf)) {
+        /*
+        EBADF
+            The fildes argument is not a valid file descriptor.
+        EINTR
+            The close() function was interrupted by a signal.
+
+        The close() function may fail if:
+
+        EIO
+            An I/O error occurred while reading from or writing to the file
+        system.
+          */
+      }
+    }
+
+    if (errf > 0) {
+      std::cerr << "redirecting child stderr to file\n";
+      if (dup2(errf, 2)) {
+        std::cerr << "dup2 error: " << strerror(errno) << "\n";
+
+        /*
+
+    EBADF
+        oldfd isn't an open file descriptor, or newfd is out of the allowed
+    range for file descriptors. EBUSY (Linux only) This may be returned by
+    dup2() or dup3() during a race condition with open(2) and dup(). EINTR The
+    dup2() or dup3() call was interrupted by a signal; see signal(7). EINVAL
+        (dup3()) flags contain an invalid value. Or, oldfd was equal to newfd.
+    EMFILE
+        The process already has the maximum number of file descriptors open and
+    tried to open a new one.
+        */
+      }
+
+      if (close(errf)) {
+        /*
+    EBADF
+        The fildes argument is not a valid file descriptor.
+    EINTR
+        The close() function was interrupted by a signal.
+
+    The close() function may fail if:
+
+    EIO
+        An I/O error occurred while reading from or writing to the file system.
+      */
+      }
+    }
 
     // the execv() only return if error occured.
     // The return value is -1
@@ -71,32 +147,102 @@ int main(int argc, char **argv) {
   size_t numUnshielded = 0;
   size_t numShielded = 0;
   bool aslr = false;
-  bool cpuTurbo = false;
-  bool maxOsPerf = true;
+  nonstd::optional<bool> cpuTurbo = false;
+  nonstd::optional<bool> maxOsPerf = true;
   bool dropCaches = true;
 
   std::vector<std::string> program;
+  std::string stdoutPath;
+  std::string stderrPath;
+  int iters = 1;
 
-  auto shieldGroup =
-      ((option("-u") &
-        value("UNSH", numUnshielded).doc("number of unshielded CPUs")) |
-       (option("-s") &
-        value("SH", numShielded).doc("number of shielded CPUs")));
+  auto shieldGroup = ((option("-u").doc("number of unshielded CPUs") &
+                       value("INT", numUnshielded)) |
+                      (option("-s").doc("number of shielded CPUs") &
+                       value("INT", numShielded)));
 
+  auto noModMode = (option("--no-mod")
+                        .doc("don't control performance")
+                        .set(aslr, true)
+                        .call([&]() { cpuTurbo = nonstd::nullopt; })
+                        .call([&]() { maxOsPerf = nonstd::nullopt; })
+                        .set(dropCaches, false));
 
-  auto cli = (shieldGroup, 
-              option("--no-drop-cache").set(dropCaches, false).doc("do not drop filesystem caches"),
-              option("--no-max-perf").set(maxOsPerf, false).doc("do not max os perf"),
-              option("--no-aslr").set(aslr, false).doc("disable ASLR"),
-              option("--cpu-turbo").set(cpuTurbo, true).doc("enable CPU turbo"),
+  auto modMode = (shieldGroup,
+                  option("--no-drop-cache")
+                      .set(dropCaches, false)
+                      .doc("do not drop filesystem caches"),
+                  option("--no-max-perf").doc("do not max os perf").call([&]() {
+                    maxOsPerf = false;
+                  }),
+                  option("--aslr").set(aslr, true).doc("enable ASLR"),
+                  option("--cpu-turbo").doc("enable CPU turbo").call([&]() {
+                    cpuTurbo = true;
+                  }),
+                  (option("--stdout").doc("redirect child stdout") &
+                   value("PATH", stdoutPath)),
+                  (option("--stderr").doc("redirect child stderr") &
+                   value("PATH", stderrPath)));
+
+  auto cli = ((noModMode | modMode),
+              (option("-n").doc("run multiple times") & value("INT", iters)),
               // run everything after "--"
               required("--") & greedy(values("cmd", program))
 
   );
 
   if (!parse(argc, argv, cli)) {
-    std::cout << make_man_page(cli, argv[0]);
+    auto fmt = doc_formatting{}.doc_column(31);
+    std::cout << make_man_page(cli, argv[0], fmt);
     return -1;
+  }
+
+  // open the redirect files, if needed
+  int errf = 0;
+  int outf = 0;
+  if (!stderrPath.empty()) {
+    std::cerr << "open " << stderrPath << "\n";
+    errf = open(stderrPath.c_str(), O_WRONLY | O_CREAT,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (-1 == errf) {
+      std::cerr << "error while opening " << stderrPath << ": "
+                << strerror(errno) << "\n";
+    }
+  }
+  if (!stdoutPath.empty()) {
+    outf = open(stdoutPath.c_str(), O_WRONLY | O_CREAT,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (-1 == outf) {
+      std::cerr << "error while opening " << stdoutPath << ": "
+                << strerror(errno) << "\n";
+    }
+  }
+
+  // if called with sudo, chown the files to whoever called sudo
+  const char *sudoUser = std::getenv("SUDO_USER");
+  if (sudoUser) {
+    std::cerr << "called with sudo by " << sudoUser << "\n";
+    uid_t uid;
+    gid_t gid;
+    struct passwd *pwd;
+
+    pwd = getpwnam(sudoUser);
+    if (pwd == NULL) {
+      // die("Failed to get uid");
+    }
+    uid = pwd->pw_uid;
+    gid = pwd->pw_gid;
+
+    if (!stdoutPath.empty()) {
+      if (chown(stdoutPath.c_str(), uid, gid) == -1) {
+        // die("chown fail");
+      }
+    }
+    if (!stderrPath.empty()) {
+      if (chown(stderrPath.c_str(), uid, gid) == -1) {
+        // die("chown fail");
+      }
+    }
   }
 
   // exec the rest of the options
@@ -154,23 +300,27 @@ int main(int argc, char **argv) {
 
   // handle CPU turbo
   perfect::CpuTurboState cpuTurboState;
-  PERFECT(perfect::get_cpu_turbo_state(&cpuTurboState));
-  if (!cpuTurbo) {
-    std::cerr << "disabling cpu turbo\n";
-    PERFECT(perfect::disable_cpu_turbo());
-  } else {
-    std::cerr << "enabling cpu turbo\n";
-    PERFECT(perfect::enable_cpu_turbo());    
+  if (cpuTurbo.has_value()) {
+    PERFECT(perfect::get_cpu_turbo_state(&cpuTurboState));
+    if (false == cpuTurbo) {
+      std::cerr << "disabling cpu turbo\n";
+      PERFECT(perfect::disable_cpu_turbo());
+    } else {
+      std::cerr << "enabling cpu turbo\n";
+      PERFECT(perfect::enable_cpu_turbo());
+    }
   }
 
   // handle governor
   perfect::OsPerfState osPerfState;
-  if (maxOsPerf) {
-    std::cerr << "set max performance state\n";
+  if (maxOsPerf.has_value()) {
     PERFECT(perfect::get_os_perf_state(osPerfState));
-    for (auto cpu : perfect::cpus()) {
-      PERFECT(perfect::os_perf_state_maximum(cpu));
-    } 
+    if (true == maxOsPerf) {
+      std::cerr << "set max performance state\n";
+      for (auto cpu : perfect::cpus()) {
+        PERFECT(perfect::os_perf_state_maximum(cpu));
+      }
+    }
   }
 
   // handle file system caches
@@ -180,13 +330,18 @@ int main(int argc, char **argv) {
   }
 
   // parent should return
-  std::cerr << "exec ";
-  for (size_t i = 0; i < args.size() - 1; ++i) {
-    std::cerr << args[i] << " ";
+  for (int runIter = 0; runIter < iters; ++runIter) {
+    std::cerr << "exec ";
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+      std::cerr << args[i] << " ";
+    }
+    std::cerr << "\n";
+    int status = fork_child(args.data(), outf, errf);
+    if (0 != status) {
+      std::cerr << "did not terminate successfully\n";
+    }
+    std::cerr << "finished execution\n";
   }
-  std::cerr << "\n";
-  int status = fork_child(args.data());
-  std::cerr << "finished execution\n";
 
   // clean up CpuSets (if needed)
   if (numShielded) {
@@ -196,13 +351,15 @@ int main(int argc, char **argv) {
   }
 
   // restore original turbo state
+  if (cpuTurbo.has_value()) {
     std::cerr << "restore CPU turbo\n";
     PERFECT(perfect::set_cpu_turbo_state(cpuTurboState));
+  }
 
-  if (maxOsPerf) {
+  if (maxOsPerf.has_value()) {
     std::cerr << "restore os performance state\n";
     PERFECT(perfect::set_os_perf_state(osPerfState));
   }
 
-  return status;
+  return 0;
 }

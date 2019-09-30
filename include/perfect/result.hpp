@@ -12,12 +12,17 @@
 #include <nvml.h>
 #endif
 
+#ifdef __linux__
+#include <cerrno>
+#endif
+
 namespace perfect {
 
 enum class Result {
   NO_PERMISSION,
   NOT_SUPPORTED,
   NO_TASK,
+
   NVML_NO_PERMISSION,
   NVML_NOT_SUPPORTED,
   NVML_UNINITIALIZED,
@@ -39,8 +44,35 @@ Result from_nvml(nvmlReturn_t nvml) {
   case NVML_ERROR_INVALID_ARGUMENT:
   case NVML_ERROR_GPU_IS_LOST:
   case NVML_ERROR_UNKNOWN:
+  case NVML_ERROR_ALREADY_INITIALIZED:
+  case NVML_ERROR_NOT_FOUND:
+  case NVML_ERROR_INSUFFICIENT_SIZE:
+  case NVML_ERROR_INSUFFICIENT_POWER:
+  case NVML_ERROR_DRIVER_NOT_LOADED:
+  case NVML_ERROR_TIMEOUT:
+  case NVML_ERROR_IRQ_ISSUE:
+  case NVML_ERROR_LIBRARY_NOT_FOUND:
+  case NVML_ERROR_FUNCTION_NOT_FOUND:
+  case NVML_ERROR_CORRUPTED_INFOROM:
+  case NVML_ERROR_RESET_REQUIRED:
+  case NVML_ERROR_OPERATING_SYSTEM:
+  case NVML_ERROR_LIB_RM_VERSION_MISMATCH:
+  case NVML_ERROR_IN_USE:
+  case NVML_ERROR_MEMORY:
+  case NVML_ERROR_NO_DATA:
+  case NVML_ERROR_VGPU_ECC_NOT_SUPPORTED:
   default:
     assert(0 && "unhandled nvmlReturn_t");
+  }
+  return Result::UNKNOWN;
+}
+#endif
+
+#ifdef __linux__
+Result from_errno(int err) {
+  switch (err) {
+  default:
+    assert(0 && "unhandled errno");
   }
   return Result::UNKNOWN;
 }

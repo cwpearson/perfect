@@ -59,7 +59,46 @@ If you don't have CUDA, then you could just do
 g++ code_using_perfect.cpp -I perfect/include
 ```
 
-## Usage
+## Tools Usage
+
+`perfect` provides some useful tools on Linux:
+
+```
+$ tools/perfect-cli -h
+SYNOPSIS
+        ./tools/perfect-cli --no-mod [-n <INT>] -- <cmd>...
+        ./tools/perfect-cli ([-u <INT>] | [-s <INT>]) [--no-drop-cache] [--no-max-perf] [--aslr]
+                            [--cpu-turbo] [--stdout <PATH>] [--stderr <PATH>] [-n <INT>] -- <cmd>...
+
+OPTIONS
+        --no-mod               don't control performance
+        -u                     number of unshielded CPUs
+        -s                     number of shielded CPUs
+        --no-drop-cache        do not drop filesystem caches
+        --no-max-perf          do not max os perf
+        --aslr                 enable ASLR
+        --cpu-turbo            enable CPU turbo
+        --stdout               redirect child stdout
+        --stderr               redirect child stderr
+        -n                     run multiple times
+```
+
+The basic usage is `tools/perfect-cli -- my-exe`, which will attempt to configure the system for repeatable performance before executing `my-exe`, and then restore the system to the original performance state before exiting.
+Most modifications require elevated privileges.
+The default behavior is to:
+* disable ASLR
+* drop filesystem caches
+* set CPU performance to maximum
+* disable CPU turbo
+
+Some options (all should provided before the `--` option):
+* `--no-mod` flag will cause `perfect-cli` to not modify the system performance state
+* `-n INT` will run the requested program `INT` times.
+* `--stderr`/`--stdout` will redirect the program-under-test's stderr and stdout to the provided paths.
+* `-s`/`-u`: set the number of shielded /unshielded CPUs. The program-under-test will run on the shielded CPUs. All other tasks will run on the unshielded CPUs.
+
+
+## API Usage
 
 The `perfect` functions all return a `perfect::Result`, which is defined in [include/perfect/result.hpp].
 When things are working, it will be `perfect::Result::SUCCESS`.
@@ -274,3 +313,4 @@ heap:  93824994414192
 ## Acks
 
 Uses [muellan/clipp](https://github.com/muellan/clipp) for cli option parsing.
+Uses [martinmoene/optional-lite](https://github.com/martinmoene/optional-lite).
