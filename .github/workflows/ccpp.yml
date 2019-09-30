@@ -40,7 +40,7 @@ jobs:
         make VERBOSE=1
     - name: test
       run: |
-        tools/perfect-cli -h
+        build/tools/perfect-cli -h
 
   build:
     runs-on: ubuntu-latest
@@ -67,4 +67,4 @@ jobs:
         make VERBOSE=1
     - name: test
       run: |
-        tools/perfect-cli -h
+        build/tools/perfect-cli -h
