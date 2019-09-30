@@ -97,6 +97,12 @@ Some options (all should provided before the `--` option):
 * `--stderr`/`--stdout` will redirect the program-under-test's stderr and stdout to the provided paths.
 * `-s`/`-u`: set the number of shielded /unshielded CPUs. The program-under-test will run on the shielded CPUs. All other tasks will run on the unshielded CPUs.
 
+A common invocation might look like:
+```
+sudo tools/perfect-cli -n 5 --stderr=run.err --stdout=run.out -- ./my-benchmark
+```
+This will disable ASLR, set CPU performance to maximum, disable CPU turbo, drop FS caches, and then run `./my-benchmark` 5 times, redirecting stdout/stderr of ./my-benchmark to `run.out`/`run.err`.
+
 
 ## API Usage
 
