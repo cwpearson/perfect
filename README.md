@@ -61,6 +61,8 @@ g++ code_using_perfect.cpp -I perfect/include
 
 ## Tools Usage
 
+### tools/perfect-cli
+
 `perfect` provides some useful tools on Linux:
 
 ```
@@ -87,9 +89,9 @@ The basic usage is `tools/perfect-cli -- my-exe`, which will attempt to configur
 Most modifications require elevated privileges.
 The default behavior is to:
 * disable ASLR
-* drop filesystem caches
 * set CPU performance to maximum
 * disable CPU turbo
+* drop filesystem caches before each iteration
 
 Some options (all should provided before the `--` option):
 * `--no-mod` flag will cause `perfect-cli` to not modify the system performance state
@@ -101,8 +103,41 @@ A common invocation might look like:
 ```
 sudo tools/perfect-cli -n 5 --stderr=run.err --stdout=run.out -- ./my-benchmark
 ```
-This will disable ASLR, set CPU performance to maximum, disable CPU turbo, drop FS caches, and then run `./my-benchmark` 5 times, redirecting stdout/stderr of ./my-benchmark to `run.out`/`run.err`.
+This will disable ASLR, set CPU performance to maximum, disable CPU turbo, and then run `./my-benchmark` 5 times after dropping the filesystem cache before each run, redirecting stdout/stderr of ./my-benchmark to `run.out`/`run.err`.
+The owner of `run.out` and `run.err` will be set to whichever user called `sudo`.
 
+### tools/addr
+
+Print the address of `main`, a stack variable, and a heap variable.
+Useful for demoing ASLR.
+
+### tools/no-aslr
+
+Disable ASLR on the provided execution.
+
+With ASLR, addresses are different with each invocation
+```
+$ tools/addr
+main:  94685074364704
+stack: 140734279743492
+heap:  94685084978800
+$ tools/addr
+main:  93891046344992
+stack: 140722671706708
+heap:  93891068624496
+```
+
+Without ASLR, addresses are the same in each invocation
+```
+$ tools/no-aslr tools/addrs       
+main:  93824992233760
+stack: 140737488347460
+heap:  93824994414192
+$ tools/no-aslr tools/addrs       
+main:  93824992233760
+stack: 140737488347460
+heap:  93824994414192
+```
 
 ## API Usage
 
@@ -115,7 +150,7 @@ perfect::CpuTurboState state;
 PERFECT(perfect::get_cpu_turbo_state(&state));
 ```
 
-## Monitoring
+### Monitoring
 
 `perfect` can monitor and record GPU activity.
 
@@ -144,10 +179,6 @@ See [tools/no_aslr.cpp](tools/no_aslr.cpp)
 * `Result disable_aslr()`: disable ASLR
 * `Result get_aslr(AslrState &state)`: save the current ASLR state
 * `Result set_aslr(const AslrState &state)`: set a previously-saved ASLR state
-
-
-
-
 
 
 ### Flush file system caches
@@ -238,40 +269,6 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 * `void flush_all(void *p, const size_t n)`: Flush all cache lines starting at `p` for `n` bytes.
 
-## Tools
-
-### tools/addr
-
-Print the address of `main`, a stack variable, and a heap variable.
-Useful for demoing ASLR.
-
-### tools/no-aslr
-
-Disable ASLR on the provided execution.
-
-With ASLR, addresses are different with each invocation
-```
-$ tools/addr
-main:  94685074364704
-stack: 140734279743492
-heap:  94685084978800
-$ tools/addr
-main:  93891046344992
-stack: 140722671706708
-heap:  93891068624496
-```
-
-Without ASLR, addresses are the same in each invocation
-```
-$ tools/no-aslr tools/addrs       
-main:  93824992233760
-stack: 140737488347460
-heap:  93824994414192
-$ tools/no-aslr tools/addrs       
-main:  93824992233760
-stack: 140737488347460
-heap:  93824994414192
-```
 
 ## Changelog
 

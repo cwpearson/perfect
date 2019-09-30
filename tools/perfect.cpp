@@ -245,13 +245,14 @@ int main(int argc, char **argv) {
     }
   }
 
-  // exec the rest of the options
+  // build the program arguments
   std::vector<char *> args;
   for (auto &c : program) {
     args.push_back((char *)c.c_str());
   }
   args.push_back(nullptr);
 
+  // init the perfect library
   PERFECT(perfect::init());
 
   auto cpus = perfect::cpus();
@@ -323,19 +324,21 @@ int main(int argc, char **argv) {
     }
   }
 
-  // handle file system caches
-  if (dropCaches) {
-    std::cerr << "clearing file system cache\n";
-    PERFECT(perfect::drop_caches());
-  }
-
   // parent should return
   for (int runIter = 0; runIter < iters; ++runIter) {
+
+    // drop filesystem caches before each run
+    if (dropCaches) {
+      std::cerr << "clearing file system cache\n";
+      PERFECT(perfect::drop_caches());
+    }
+
     std::cerr << "exec ";
     for (size_t i = 0; i < args.size() - 1; ++i) {
       std::cerr << args[i] << " ";
     }
     std::cerr << "\n";
+
     int status = fork_child(args.data(), outf, errf);
     if (0 != status) {
       std::cerr << "did not terminate successfully\n";
