@@ -43,6 +43,9 @@ target_link_libraries(cpu-turbo perfect)
 add_executable(os-perf os_perf.cpp)
 target_link_libraries(os-perf perfect)
 
+add_executable(high-priority high_priority.cpp)
+target_link_libraries(high-priority perfect)
+
 if(CMAKE_CUDA_COMPILER)
     add_executable(gpu-clocks gpu_clocks.cu)
     target_link_libraries(gpu-clocks perfect)

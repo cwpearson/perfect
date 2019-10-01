@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/personality.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "perfect/result.hpp"
 
@@ -107,6 +109,17 @@ Result set_personality(const int persona) {
   }
   return Result::SUCCESS;
 }
+
+// give the calling process the highest priority
+Result set_high_priority() {
+  if (setpriority(PRIO_PROCESS, 0, -20)) {
+    return from_errno(errno);
+  }
+  return Result::SUCCESS;
+}
+
+
+
 }
 
 } // namespace perfect

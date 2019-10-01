@@ -26,6 +26,7 @@
 #include "perfect/detail/os/linux.hpp"
 #include "perfect/drop_caches.hpp"
 #include "perfect/os_perf.hpp"
+#include "perfect/priority.hpp"
 
 // argv should be null-terminated
 // outf and errf are file descriptors to where stdout and stderr should be
@@ -152,6 +153,7 @@ int main(int argc, char **argv) {
   nonstd::optional<bool> cpuTurbo = false;
   nonstd::optional<bool> maxOsPerf = true;
   bool dropCaches = true;
+  bool highPriority = true;
 
   std::vector<std::string> program;
   std::string stdoutPath;
@@ -173,7 +175,8 @@ int main(int argc, char **argv) {
                         .set(aslr, true)
                         .call([&]() { cpuTurbo = nonstd::nullopt; })
                         .call([&]() { maxOsPerf = nonstd::nullopt; })
-                        .set(dropCaches, false));
+                        .set(dropCaches, false)
+                        .set(highPriority, false));
 
   auto modMode = (shieldGroup,
                   option("--no-drop-cache")
@@ -183,6 +186,7 @@ int main(int argc, char **argv) {
                     maxOsPerf = false;
                   }),
                   option("--aslr").set(aslr, true).doc("enable ASLR"),
+                  option("--no-priority").set(highPriority, false).doc("don't set high priority"),
                   option("--cpu-turbo").doc("enable CPU turbo").call([&]() {
                     cpuTurbo = true;
                   }),
@@ -338,6 +342,11 @@ int main(int argc, char **argv) {
         PERFECT(perfect::os_perf_state_maximum(cpu));
       }
     }
+  }
+
+  if (highPriority) {
+    std::cerr << "set high priority\n";
+    PERFECT(perfect::set_high_priority());
   }
 
   // parent should return

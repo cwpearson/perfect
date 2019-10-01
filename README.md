@@ -150,6 +150,18 @@ perfect::CpuTurboState state;
 PERFECT(perfect::get_cpu_turbo_state(&state));
 ```
 
+### High Priority
+
+`perfect` can set high scheduling priority for a process
+
+See [examples/high_priority.cpp](examples/high_priority.cpp)
+
+```c++
+#include "perfect/priority.hpp"
+```
+
+* `Result set_high_priority()`: set the highest possible scheduling priority for the calling process
+
 ### Monitoring
 
 `perfect` can monitor and record GPU activity.
