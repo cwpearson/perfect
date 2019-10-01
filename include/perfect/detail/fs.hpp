@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <fstream>
 #include <string>
 
@@ -32,15 +33,20 @@ Result write_str(const std::string &path, const std::string &val) {
   if (ofs.fail()) {
     switch (errno) {
     case EACCES:
-    std::cerr << "EACCES when writing to " << path << "\n";
+      // std::cerr << "EACCES when writing to " << path << "\n";
       return Result::NO_PERMISSION;
     case EPERM:
-      std::cerr << "EPERM when writing to " << path << "\n";
+      // std::cerr << "EPERM when writing to " << path << "\n";
       return Result::NO_PERMISSION;
     case ENOENT:
-    std::cerr << "ENOENT when writing to " << path << "\n";
+      // std::cerr << "ENOENT when writing to " << path << "\n";
       return Result::NOT_SUPPORTED;
+    case EINVAL:
+      // std::cerr << "EINVAL when writing to " << path << "\n";
+      return Result::ERRNO_INVALID;
     default:
+      std::cerr << strerror(errno) << " when writing " << val << " to " << path
+                << "\n";
       return Result::UNKNOWN;
     }
   }

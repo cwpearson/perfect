@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cerrno>
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -9,6 +10,7 @@
 #ifdef __linux__
 #include <fcntl.h>
 #include <pwd.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -27,6 +29,26 @@
 #include "perfect/drop_caches.hpp"
 #include "perfect/os_perf.hpp"
 #include "perfect/priority.hpp"
+
+typedef std::function<perfect::Result()> CleanupFn;
+std::vector<CleanupFn> cleanups;
+
+// restore the system state to how we found it
+void cleanup(int dummy) {
+  (void)dummy;
+  std::cerr << "caught ctrl-c\n";
+
+  // unregister our handler
+  signal(SIGINT, SIG_DFL);
+  std::cerr << "cleaning up\n";
+  std::cerr << "ctrl-c again to quit\n";
+
+  for (auto f : cleanups) {
+    perfect::Result result = f();
+  }
+
+  exit(EXIT_FAILURE);
+}
 
 // argv should be null-terminated
 // outf and errf are file descriptors to where stdout and stderr should be
@@ -145,6 +167,9 @@ int fork_child(char *const *argv, int outf, int errf) {
 }
 
 int main(int argc, char **argv) {
+
+  signal(SIGINT, cleanup);
+
   using namespace clipp;
 
   size_t numUnshielded = 0;
@@ -186,7 +211,9 @@ int main(int argc, char **argv) {
                     maxOsPerf = false;
                   }),
                   option("--aslr").set(aslr, true).doc("enable ASLR"),
-                  option("--no-priority").set(highPriority, false).doc("don't set high priority"),
+                  option("--no-priority")
+                      .set(highPriority, false)
+                      .doc("don't set high priority"),
                   option("--cpu-turbo").doc("enable CPU turbo").call([&]() {
                     cpuTurbo = true;
                   }),
@@ -283,34 +310,44 @@ int main(int argc, char **argv) {
   }
 
   // handle CPU shielding
-  perfect::CpuSet shielded, unshielded;
+  perfect::CpuSet root, shielded, unshielded;
   if (numShielded) {
     std::cerr << "shielding " << numShielded << " cpus\n";
 
-    perfect::CpuSet root;
     PERFECT(perfect::CpuSet::get_root(root));
     PERFECT(root.make_child(shielded, "shielded"));
     PERFECT(root.make_child(unshielded, "unshielded"));
 
     std::cerr << "enable memory\n";
     PERFECT(shielded.enable_mem(0));
-    PERFECT(shielded.enable_mem(0));
+    PERFECT(unshielded.enable_mem(0));
 
     std::cerr << "enable cpus\n";
     size_t i = 0;
-    for (; i < numShielded; ++i) {
-      std::cerr << "shield cpu " << cpus[i] << "\n";
-      shielded.enable_cpu(cpus[i]);
-    }
-    for (; i < cpus.size(); ++i) {
+    for (; i < cpus.size() - numShielded; ++i) {
       std::cerr << "unshield cpu " << cpus[i] << "\n";
       unshielded.enable_cpu(cpus[i]);
+    }
+    for (; i < cpus.size(); ++i) {
+      std::cerr << "shield cpu " << cpus[i] << "\n";
+      shielded.enable_cpu(cpus[i]);
     }
 
     std::cerr << "migrate self\n";
     PERFECT(root.migrate_self_to(shielded));
-    std::cerr << "migrate other\n";
+    std::cerr << "migrate other (1/2)\n";
     PERFECT(root.migrate_tasks_to(unshielded));
+    // some tasks may have been spawned by unmigrated tasks while we migrated
+    std::cerr << "migrate other (2/2)\n";
+    PERFECT(root.migrate_tasks_to(unshielded));
+
+    cleanups.push_back(CleanupFn([&] {
+      std::cerr << "cleanup: shielded cpu set\n";
+      shielded.destroy();
+      std::cerr << "cleanup: unshielded cpu set\n";
+      unshielded.destroy();
+      return perfect::Result::SUCCESS;
+    }));
   }
 
   // handle aslr
@@ -330,6 +367,11 @@ int main(int argc, char **argv) {
       std::cerr << "enabling cpu turbo\n";
       PERFECT(perfect::enable_cpu_turbo());
     }
+
+    cleanups.push_back(CleanupFn([&] {
+      std::cerr << "cleanup: restore CPU turbo state\n";
+      return perfect::set_cpu_turbo_state(cpuTurboState);
+    }));
   }
 
   // handle governor
@@ -342,6 +384,11 @@ int main(int argc, char **argv) {
         PERFECT(perfect::os_perf_state_maximum(cpu));
       }
     }
+
+    cleanups.push_back(CleanupFn([&] {
+      std::cerr << "cleanup: os governor\n";
+      return perfect::set_os_perf_state(osPerfState);
+    }));
   }
 
   if (highPriority) {

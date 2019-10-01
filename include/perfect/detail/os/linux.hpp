@@ -118,8 +118,17 @@ Result set_high_priority() {
   return Result::SUCCESS;
 }
 
-
-
+// disable all but one SMT thread for all CPUs the calling process can run on
+Result disable_smt() {
+  return Result::NOT_SUPPORTED;
 }
+
+// enable SMT for all CPUs the calling process can run on
+Result enable_smt() {
+return Result::NOT_SUPPORTED;
+}
+
+
+} // namespace detail
 
 } // namespace perfect

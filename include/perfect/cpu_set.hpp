@@ -12,22 +12,25 @@
 #include <string>
 #include <vector>
 
+#include "detail/fs.hpp"
 #include "init.hpp"
 #include "result.hpp"
-
-#define SUCCESS_OR_RETURN(stmt) \
-{\
-  Result _ret; \
-  _ret = (stmt); \
-if (_ret != Result::SUCCESS) {\
-  return _ret;\
-}\
-}
 
 std::set<int> operator-(const std::set<int> &lhs, const std::set<int> &rhs) {
   std::set<int> result;
   for (auto e : lhs) {
     if (0 == rhs.count(e)) {
+      result.insert(e);
+    }
+  }
+  return result;
+}
+
+// intersection
+std::set<int> operator&(const std::set<int> &lhs, const std::set<int> &rhs) {
+  std::set<int> result;
+  for (auto e : lhs) {
+    if (1 == rhs.count(e)) {
       result.insert(e);
     }
   }
@@ -86,7 +89,6 @@ std::set<int> parse_token(const std::string &token) {
 }
 
 std::set<int> parse_cpuset(const std::string &s) {
-  // std::cerr << "parse_cpuset: parsing '" << s << "'\n";
   std::set<int> result;
 
   std::string token;
@@ -109,11 +111,12 @@ namespace perfect {
 class CpuSet {
 public:
   std::string path_;
-  std::set<int> cpus_;
-  std::set<int> mems_;
   CpuSet *parent_;
 
-  // make sure cpuset is initialized
+  CpuSet() : path_(""), parent_(nullptr) {}
+  CpuSet(const CpuSet &other) : path_(other.path_), parent_(other.parent_) {}
+
+  // make sure cpuset system is initialized
   static Result init() {
 
     // check for "nodev cpuset" in /proc/filesystems
@@ -148,8 +151,8 @@ public:
           return Result::SUCCESS;
         }
         case EPERM: {
-        // std::cerr << "EPERM in mount: " << strerror(errno) << "\n";
-        return Result::NO_PERMISSION;
+          // std::cerr << "EPERM in mount: " << strerror(errno) << "\n";
+          return Result::NO_PERMISSION;
         }
         case ENOENT:
         case EROFS:
@@ -162,23 +165,24 @@ public:
     return Result::SUCCESS;
   }
 
-  std::string get_raw_cpus() {
-    std::ifstream is(path_ + "/cpuset.cpus");
+  std::string get_raw_cpus() const {
+    std::string path = path_ + "/cpuset.cpus";
+    std::ifstream is(path);
     std::stringstream ss;
     ss << is.rdbuf();
     return remove_space(ss.str());
   }
 
-  std::string get_raw_mems() {
+  std::string get_raw_mems() const {
     std::ifstream is(path_ + "/cpuset.mems");
     std::stringstream ss;
     ss << is.rdbuf();
     return remove_space(ss.str());
   }
 
-  std::set<int> get_cpus() { return parse_cpuset(get_raw_cpus()); }
+  std::set<int> get_cpus() const { return parse_cpuset(get_raw_cpus()); }
 
-  std::set<int> get_mems() { return parse_cpuset(get_raw_mems()); }
+  std::set<int> get_mems() const { return parse_cpuset(get_raw_mems()); }
 
   // migrate the caller task from this cpu set to another
   Result migrate_self_to(CpuSet &other) {
@@ -193,11 +197,12 @@ public:
     std::string line;
     while (std::getline(is, line)) {
       line = remove_space(line);
+
       if (std::to_string(self) == line) {
-        // std::cerr << "migrating self task " << line << " to " << other.path
-        //           << "\n";
-        other.write_task(line);
-        return Result::SUCCESS;
+        // std::cerr << "migrating self task " << line << " to " << other.path_
+        //            << "\n";
+        pid_t pid = std::stoi(line);
+        return other.write_task(pid);
       }
     }
     return Result::NO_TASK;
@@ -205,46 +210,58 @@ public:
 
   // migrate tasks in this cpu set to another
   Result migrate_tasks_to(CpuSet &other) {
+    // other must have cpus and mems
+    auto s = other.get_cpus();
+
+    assert(!other.get_cpus().empty());
+    assert(!other.get_mems().empty());
+
     // enable memory migration in other
-    SUCCESS_OR_RETURN(other.enable_memory_migration());
+    PERFECT_SUCCESS_OR_RETURN(other.enable_memory_migration());
 
     // read this tasks and write each line to other.tasks
     std::ifstream is(path_ + "/tasks");
     std::string line;
     while (std::getline(is, line)) {
-      // std::cerr << "migrating task " << line << " to " << other.path << "\n";
-      other.write_task(line);
+      pid_t pid = std::stoi(line);
+      // std::cerr << "migrating task " << pid << " to " << other.path_ << "\n";
+      Result result = other.write_task(pid);
+      if (Result::ERRNO_INVALID == result) {
+        // std::cerr << "task " << pid << " is unmovable\n";
+      } else {
+        PERFECT_SUCCESS_OR_RETURN(result);
+      }
     }
-
     return Result::SUCCESS;
   }
 
   Result enable_memory_migration() {
-    std::ofstream ofs(path_ + "/" + "cpuset.memory_migrate");
-    ofs << "1";
-    ofs.close();
-    if (ofs.fail()) {
-    switch (errno) {
-    case EACCES:
-      return Result::NO_PERMISSION;
-    case ENOENT:
-      return Result::NOT_SUPPORTED;
-    default:
-      return Result::UNKNOWN;
-    }
-  }
-    return Result::SUCCESS;
+    return detail::write_str(path_ + "/cpuset.memory_migrate", "1");
   }
 
-  void write_task(const std::string &task) {
-    // write `task` to path/tasks
-    std::ofstream os(path_ + "/tasks");
-    os << task << "\n";
+  Result write_task(pid_t pid) {
+    return detail::write_str(path_ + "/tasks", std::to_string(pid) + "\n");
+  }
+
+  static Result get_affinity(std::set<int> &cpus, pid_t pid) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    if (sched_getaffinity(pid, sizeof(mask), &mask)) {
+      return from_errno(errno);
+    }
+
+    cpus.clear();
+    for (int i = 0; i < CPU_SETSIZE; ++i) {
+      if
+        CPU_ISSET(i, &mask) { cpus.insert(i); }
+    }
+
+    return Result::SUCCESS;
   }
 
   // object representing the root CPU set
   static Result get_root(CpuSet &root) {
-    SUCCESS_OR_RETURN(CpuSet::init());
+    PERFECT_SUCCESS_OR_RETURN(CpuSet::init());
     root.path_ = "/dev/cpuset";
     root.parent_ = nullptr;
     return Result::SUCCESS;
@@ -256,7 +273,7 @@ public:
   Result make_child(CpuSet &child, const std::string &name) {
 
     if (mkdir((path_ + "/" + name).c_str(),
-              S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) {
+              S_IRUSR | S_IWUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
       switch (errno) {
       case EEXIST: {
         // okay
@@ -264,8 +281,6 @@ public:
       }
       case EACCES:
         return Result::NO_PERMISSION;
-      case ENOENT:
-      case EROFS:
       default:
         return Result::UNKNOWN;
       }
@@ -275,6 +290,8 @@ public:
     child.parent_ = this;
     return Result::SUCCESS;
   }
+
+  std::vector<CpuSet> get_children() { assert(false && "unimplemented"); }
 
   Result enable_cpu(const int cpu) {
     std::set<int> cpus = get_cpus();
@@ -290,30 +307,28 @@ public:
     return write_cpus(finalCpus);
   }
 
-  // FIXME: check error
   Result write_cpus(std::set<int> cpus) {
-    std::ofstream os(path_ + "/cpuset.cpus");
+    std::string str;
     bool comma = false;
     for (auto cpu : cpus) {
       if (comma)
-        os << ",";
-      os << cpu << "-" << cpu;
+        str += ",";
+      str += std::to_string(cpu) + "-" + std::to_string(cpu);
       comma = true;
     }
-    return Result::SUCCESS;
+    return detail::write_str(path_ + "/cpuset.cpus", str);
   }
 
-  // FIXME: check write
   Result write_mems(std::set<int> mems) {
-    std::ofstream os(path_ + "/cpuset.mems");
+    std::string str;
     bool comma = false;
     for (auto mem : mems) {
       if (comma)
-        os << ",";
-      os << mem << "-" << mem;
+        str += ",";
+      str += std::to_string(mem) + "-" + std::to_string(mem);
       comma = true;
     }
-    return Result::SUCCESS;
+    return detail::write_str(path_ + "/cpuset.mems", str);
   }
 
   Result enable_mem(const int mem) {
@@ -331,31 +346,40 @@ public:
   }
 
   Result destroy() {
+
+    // already destroyed
+    if (!detail::path_exists(path_)) {
+      return Result::SUCCESS;
+    }
+
     // remove all child cpu sets
 
     // move all attached processes back to parent
-    assert(parent_);
-    migrate_tasks_to(*parent_);
+    assert(parent_ && "should not call destroy on root cpuset");
+    PERFECT_SUCCESS_OR_RETURN(migrate_tasks_to(*parent_));
 
     // remove with rmdir
+    Result result = Result::UNKNOWN;
     if (rmdir(path_.c_str())) {
       switch (errno) {
+      case ENOENT:
+        // already gone
+        result = Result::SUCCESS;
+        break;
       default:
         std::cerr << "unhandled error in rmdir: " << strerror(errno) << "\n";
-        return Result::UNKNOWN;
+        result = Result::UNKNOWN;
       }
     }
 
     path_ = "";
-    return Result::SUCCESS;
+    return result;
   }
-
-
 };
 
-  std::ostream &operator<<(std::ostream &s, const CpuSet &c) {
-    s << c.path_;
-    return s;
-  }
+std::ostream &operator<<(std::ostream &s, const CpuSet &c) {
+  s << c.path_;
+  return s;
+}
 
 } // namespace perfect

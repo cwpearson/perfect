@@ -22,7 +22,7 @@ enum class Result {
   NO_PERMISSION,
   NOT_SUPPORTED,
   NO_TASK,
-
+  ERRNO_INVALID,
   NVML_NO_PERMISSION,
   NVML_NOT_SUPPORTED,
   NVML_UNINITIALIZED,
@@ -88,6 +88,8 @@ const char *get_string(const Result &result) {
     return "unsupported operation";
   case Result::NO_TASK:
     return "no such task";
+  case Result::ERRNO_INVALID:
+    return "errno EINVAL";
   case Result::UNKNOWN:
     return "unknown error";
   case Result::NVML_NOT_SUPPORTED:
@@ -117,11 +119,11 @@ inline void check(Result result, const char *file, const int line) {
 
 #define PERFECT(stmt) check(stmt, __FILE__, __LINE__);
 
-#define PERFECT_SUCCESS_OR_RETURN(stmt) \
-{\
-  Result _ret; \
-  _ret = (stmt); \
-if (_ret != Result::SUCCESS) {\
-  return _ret;\
-}\
-}
+#define PERFECT_SUCCESS_OR_RETURN(stmt)                                        \
+  {                                                                            \
+    Result _ret;                                                               \
+    _ret = (stmt);                                                             \
+    if (_ret != Result::SUCCESS) {                                             \
+      return _ret;                                                             \
+    }                                                                          \
+  }
