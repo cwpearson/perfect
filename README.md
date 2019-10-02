@@ -17,6 +17,7 @@ CPU/GPU Performance control library for benchmarking on Linux, x86, POWER, and N
 - [x] CUDA not required (GPU functions will not be compiled)
 - [x] Flush file system caches (linux)
 - [x] Disable ASLR (linux)
+- [x] process priority interface (linux)
 
 ## Contributors
 * [Carl Pearson](https://cwpearson.github.io)
@@ -311,21 +312,17 @@ See [examples/cpu_cache.cpp](examples/cpu_cache.cpp).
 
 - [ ] only monitor certain GPUs
 - [ ] hyperthreading interface
-- [ ] process priority interface
-- [ ] A wrapper utility
-    - [ ] disable hyperthreading
-    - [ ] reserve cores 
-    - [ ] set process priority
-    - [ ] disable ASLR
+
 
 ## Related
 
 * [LLVM benchmarking instructions](https://llvm.org/docs/Benchmarking.html#linux) covering ASLR, Linux governor, cpuset shielding, SMT, and Intel turbo.
-* [easyperf.net](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) blog post discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
-* [temci](https://github.com/parttimenerd/temci) benchmarking tool for cpu sheilding and disabling hyperthreading, among other things.
-* [perflock](https://github.com/aclements/perflock) tool for locking CPU frequency scaling domains
+* [easyperf.net blog post](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux#2-disable-hyper-threading) discussing ACPI/Intel turbo, SMT, Linux governor, CPU affinity, process priority, file system caches, and ASLR. 
+* [parttimenerd/temci](https://github.com/parttimenerd/temci) benchmarking tool for cpu sheilding and disabling hyperthreading, among other things.
+* [aclements/perflock](https://github.com/aclements/perflock) tool for locking CPU frequency scaling domains
+* [lpechacek/cpuset](https://github.com/lpechacek/cpuset) python package/tool for managing CPU shielding
 
 ## Acks
 
-Uses [muellan/clipp](https://github.com/muellan/clipp) for cli option parsing.
-Uses [martinmoene/optional-lite](https://github.com/martinmoene/optional-lite).
+* Uses [muellan/clipp](https://github.com/muellan/clipp) for cli option parsing.
+* Uses [martinmoene/optional-lite](https://github.com/martinmoene/optional-lite).
